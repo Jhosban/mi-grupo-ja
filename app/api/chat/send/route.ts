@@ -4,7 +4,19 @@ import { N8nClient } from '@/lib/services/n8n-client';
 
 export const runtime = 'nodejs'; // SSE estable
 
+export const dynamic = 'force-dynamic'; // Ensure dynamic rendering
+
+// Support both GET and POST methods
+export async function GET(req: NextRequest) {
+  return handleRequest(req);
+}
+
 export async function POST(req: NextRequest) {
+  return handleRequest(req);
+}
+
+// Shared handler for both GET and POST
+async function handleRequest(req: NextRequest) {
   try {
     let message, conversationId, settings;
     
@@ -20,10 +32,29 @@ export async function POST(req: NextRequest) {
       settings = parsedData.settings;
     } else {
       // Parse from request body (for regular POST)
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       message = body.message;
       conversationId = body.conversationId;
       settings = body.settings;
+    }
+    
+    if (!message) {
+      return new Response(
+        `data: ${JSON.stringify({ 
+          type: 'error', 
+          data: { 
+            message: 'Message is required', 
+            code: 'INVALID_REQUEST' 
+          } 
+        })}\n\n`, 
+        {
+          headers: { 
+            'Content-Type': 'text/event-stream', 
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          }
+        }
+      );
     }
     
     // Create N8N client

@@ -8,6 +8,9 @@ import { ConversationSidebar } from '@/components/chat/ConversationSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { Message, Conversation } from '@/types/chat.types';
 
+// Force dynamic rendering to avoid static generation issues with next-intl
+export const dynamic = 'force-dynamic';
+
 // Mock data for development purposes, will be replaced with real API calls
 const mockConversations: Conversation[] = [
   { id: '1', title: 'Conversación de prueba' },
@@ -55,6 +58,8 @@ export default function ChatLayout() {
   
   // Function to send a message
   const handleSendMessage = async (message: string) => {
+    if (!message.trim()) return;
+    
     // Add user message to the chat
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -67,89 +72,111 @@ export default function ChatLayout() {
     setStreamingMessage('');
     
     try {
-      // Crear ID para el mensaje del asistente
+      // Create ID for assistant message
       const assistantMessageId = `assistant-${Date.now()}`;
       let messageContent = '';
       let messageSources: Array<{ title: string; url: string; snippet: string }> = [];
       
-      // Configurar EventSource para SSE
-      const eventSource = new EventSource(`/api/chat/send?data=${encodeURIComponent(JSON.stringify({
-        message,
-        conversationId: activeConversationId,
-        settings: { topK: 5, temperature: 0.7 }
-      }))}`);
+      // Add empty assistant message to show immediately
+      setMessages((prev) => [...prev, {
+        id: assistantMessageId,
+        role: 'assistant' as const,
+        content: ''
+      }]);
       
-      // Procesar los eventos SSE
-      eventSource.onmessage = (event) => {
-        try {
-          const parsedData = JSON.parse(event.data);
+      // Configure EventSource for SSE - Use POST directly instead of GET with query params
+      const response = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          conversationId: activeConversationId,
+          settings: { topK: 5, temperature: 0.7 }
+        })
+      });
+      
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Set up the reader for the response body stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      // Process the stream
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n\n');
+        
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) continue;
           
-          if (parsedData.type === 'message') {
-            messageContent += parsedData.data.content;
-            setStreamingMessage(messageContent);
+          try {
+            const eventData = line.replace('data: ', '');
+            const parsedData = JSON.parse(eventData);
             
-            // Actualizar mensajes
-            setMessages((prevMessages) => {
-              const updatedMessages = [...prevMessages];
-              const assistantMessageIndex = updatedMessages.findIndex(m => m.id === assistantMessageId);
+            if (parsedData.type === 'message') {
+              messageContent += parsedData.data.content;
+              setStreamingMessage(messageContent);
               
-              if (assistantMessageIndex >= 0) {
-                updatedMessages[assistantMessageIndex] = {
-                  ...updatedMessages[assistantMessageIndex],
-                  content: messageContent
-                };
-              } else {
-                updatedMessages.push({
-                  id: assistantMessageId,
-                  role: 'assistant' as const,
-                  content: messageContent
-                });
-              }
+              // Update messages
+              setMessages((prevMessages) => {
+                const updatedMessages = [...prevMessages];
+                const assistantMessageIndex = updatedMessages.findIndex(m => m.id === assistantMessageId);
+                
+                if (assistantMessageIndex >= 0) {
+                  updatedMessages[assistantMessageIndex] = {
+                    ...updatedMessages[assistantMessageIndex],
+                    content: messageContent
+                  };
+                }
+                
+                return updatedMessages;
+              });
+            } else if (parsedData.type === 'sources' && parsedData.data.sources) {
+              messageSources = parsedData.data.sources;
               
-              return updatedMessages;
-            });
-          } else if (parsedData.type === 'sources' && parsedData.data.sources) {
-            messageSources = parsedData.data.sources;
-            
-            // Actualizar mensajes con fuentes
-            setMessages((prevMessages) => {
-              const updatedMessages = [...prevMessages];
-              const assistantMessageIndex = updatedMessages.findIndex(m => m.id === assistantMessageId);
-              
-              if (assistantMessageIndex >= 0) {
-                updatedMessages[assistantMessageIndex] = {
-                  ...updatedMessages[assistantMessageIndex],
-                  content: messageContent,
-                  sources: messageSources
-                };
-              }
-              
-              return updatedMessages;
-            });
-          } else if (parsedData.type === 'complete') {
-            // Flujo completo, cerrar conexión
-            eventSource.close();
-            setIsLoading(false);
-          } else if (parsedData.type === 'error') {
-            console.error('Error from SSE:', parsedData.data.message);
-            eventSource.close();
-            setIsLoading(false);
+              // Update messages with sources
+              setMessages((prevMessages) => {
+                const updatedMessages = [...prevMessages];
+                const assistantMessageIndex = updatedMessages.findIndex(m => m.id === assistantMessageId);
+                
+                if (assistantMessageIndex >= 0) {
+                  updatedMessages[assistantMessageIndex] = {
+                    ...updatedMessages[assistantMessageIndex],
+                    content: messageContent,
+                    sources: messageSources
+                  };
+                }
+                
+                return updatedMessages;
+              });
+            } else if (parsedData.type === 'complete') {
+              setIsLoading(false);
+            } else if (parsedData.type === 'error') {
+              console.error('Error from SSE:', parsedData.data.message);
+              setIsLoading(false);
+            }
+          } catch (e) {
+            console.error('Error parsing SSE message:', e);
           }
-        } catch (e) {
-          console.error('Error parsing SSE message:', e);
         }
-      };
-      
-      // Manejar errores
-      eventSource.onerror = () => {
-        console.error('EventSource failed');
-        eventSource.close();
-        setIsLoading(false);
-      };
-      
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setIsLoading(false);
+      
+      // Show error to the user
+      setMessages((prev) => [...prev, {
+        id: `error-${Date.now()}`,
+        role: 'assistant' as const,
+        content: 'Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, intenta de nuevo.'
+      }]);
     }
   };
   
