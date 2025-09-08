@@ -2,7 +2,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 RUN npm i -g pnpm@8
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm i --frozen-lockfile
+RUN pnpm i --force
 COPY . .
 RUN NEXT_TELEMETRY_DISABLED=1 pnpm build
 
