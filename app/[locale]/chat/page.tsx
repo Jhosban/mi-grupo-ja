@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useSession } from 'next-auth/react';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
@@ -179,6 +180,9 @@ export default function ChatLayout() {
     }
   };
   
+  // Set up settings modal
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900">
       {/* Sidebar - hidden on small screens by default */}
@@ -196,7 +200,7 @@ export default function ChatLayout() {
         <ChatHeader
           title={appName}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          onOpenSettings={() => {}}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
         
         <ChatArea
@@ -205,6 +209,24 @@ export default function ChatLayout() {
           onSendMessage={handleSendMessage}
         />
       </div>
+
+      {/* Settings Modal - can be implemented later if needed */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">{t('settings.title')}</h2>
+            {/* Settings content would go here */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md"
+              >
+                {t('settings.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -26,7 +26,8 @@
       "language": "Idioma",
       "theme": "Tema",
       "save": "Guardar",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "logout": "Cerrar sesión"
     }
   },
   "common": {
