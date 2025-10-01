@@ -60,81 +60,70 @@ async function handleRequest(req: NextRequest) {
     // Create N8N client
     const n8nClient = new N8nClient();
     
-    // Send message to N8N service
-    const baseUrl = process.env.N8N_BASE_URL || 'http://localhost:5678';
-    const webhookPath = process.env.N8N_WEBHOOK_PATH || '/webhook/rag-chat';
-    const res = await fetch(baseUrl + webhookPath, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(process.env.N8N_API_KEY ? { Authorization: `Bearer ${process.env.N8N_API_KEY}` } : {})
-      },
-      body: JSON.stringify({
-        chatInput: message,
-        topK: settings?.topK ?? 5,
-        temperature: settings?.temperature ?? 0.7
-      })
-    });
+    try {
+      // Send message using the configured N8nClient
+      const responseData = await n8nClient.sendMessage(
+        message,
+        settings?.topK ?? 5,
+        settings?.temperature ?? 0.7
+      );
+      
+      // Create encoder for SSE
+      const encoder = new TextEncoder();
+      
+      // Create stream
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Helper to push SSE events
+          const push = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+          
+          // Chunk output into blocks of 600-800 characters
+          const chunks = responseData.output.match(/[\s\S]{600,800}|[\s\S]{1,800}/g) ?? [];
+          
+          // Send each chunk as a message event
+          for (const chunk of chunks) {
+            push({ type: 'message', data: { content: chunk } });
+            
+            // Add a small delay between chunks to simulate typing
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          
+          // Send sources if available
+          if (responseData.sources) {
+            push({ type: 'sources', data: { sources: responseData.sources } });
+          }
+          
+          // Send usage if available
+          if (responseData.usage) {
+            push({ type: 'usage', data: { usage: responseData.usage } });
+          }
+          
+          // Send completion event
+          push({ type: 'complete', data: { ok: true } });
+          
+          // Close the stream
+          controller.close();
+        }
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
+      // Return the stream as an SSE response
+      return new Response(stream, { 
+        headers: { 
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        }
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al llamar a N8N';
+      console.error('Error from N8N service:', errorMessage);
       return new Response(
-        `data: ${JSON.stringify({ type: 'error', data: { message: text, code: 'N8N_SERVICE_ERROR' } })}\n\n`, 
+        `data: ${JSON.stringify({ type: 'error', data: { message: errorMessage, code: 'N8N_SERVICE_ERROR' } })}\n\n`, 
         {
           headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
         }
       );
     }
-
-    // Get response data
-    const data = await res.json(); // bloque: { output, sources?, usage? }
-    
-    // Create encoder for SSE
-    const encoder = new TextEncoder();
-    
-    // Create stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        // Helper to push SSE events
-        const push = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
-        
-        // Chunk output into blocks of 600-800 characters
-        const chunks = data.output.match(/[\s\S]{600,800}|[\s\S]{1,800}/g) ?? [];
-        
-        // Send each chunk as a message event
-        for (const chunk of chunks) {
-          push({ type: 'message', data: { content: chunk } });
-          
-          // Add a small delay between chunks to simulate typing
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-        
-        // Send sources if available
-        if (data.sources) {
-          push({ type: 'sources', data: { sources: data.sources } });
-        }
-        
-        // Send usage if available
-        if (data.usage) {
-          push({ type: 'usage', data: { usage: data.usage } });
-        }
-        
-        // Send completion event
-        push({ type: 'complete', data: { ok: true } });
-        
-        // Close the stream
-        controller.close();
-      }
-    });
-
-    // Return the stream as an SSE response
-    return new Response(stream, { 
-      headers: { 
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-      }
-    });
   } catch (error) {
     console.error('Error processing chat message:', error);
     return new Response(

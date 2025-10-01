@@ -27,19 +27,29 @@ export type SSEEvent = {
 };
 
 export class N8nClient {
-  private baseUrl: string;
-  private webhookPath: string;
+  private endpointUrl: string;
   private apiKey?: string;
 
   constructor() {
-    this.baseUrl = process.env.N8N_BASE_URL || 'http://localhost:5678';
-    this.webhookPath = process.env.N8N_WEBHOOK_PATH || '/webhook/rag-chat';
+    // Determinar qué URL utilizar según la configuración
+    const useProd = process.env.N8N_USE_PROD === 'true';
+    
+    if (useProd) {
+      // Usar el webhook de producción
+      this.endpointUrl = process.env.N8N_PROD_WEBHOOK_URL || 'https://hooks.singularity.cyou/webhook/d6ac9b0e-d367-43a0-9953-6071ccc35cb7';
+      console.log('Usando webhook de PRODUCCIÓN');
+    } else {
+      // Usar el webhook de prueba
+      this.endpointUrl = process.env.N8N_TEST_WEBHOOK_URL || 'https://flows.singularity.cyou/webhook-test/d6ac9b0e-d367-43a0-9953-6071ccc35cb7';
+      console.log('Usando webhook de PRUEBA');
+    }
+    
     this.apiKey = process.env.N8N_API_KEY;
   }
 
   async sendMessage(message: string, topK?: number, temperature?: number): Promise<N8nResponseBody> {
-    const url = `${this.baseUrl}${this.webhookPath}`;
-    
+    const url = this.endpointUrl;
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -52,7 +62,7 @@ export class N8nClient {
       chatInput: message,
       topK: topK ?? 5,
       temperature: temperature ?? 0.7,
-      metadata: { 
+      metadata: {
         source: 'webapp',
         appVersion: process.env.APP_VERSION || '1.0.0'
       }
@@ -65,12 +75,15 @@ export class N8nClient {
         body: JSON.stringify(body),
       });
 
+      const rawText = await response.text();
+      console.log('Respuesta cruda de n8n:', rawText);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`N8n service error: ${response.status} ${errorText}`);
+        throw new Error(`N8n service error: ${response.status} ${rawText}`);
       }
 
-      return await response.json();
+      // Intentar parsear el JSON
+      return JSON.parse(rawText);
     } catch (error) {
       console.error('Error calling n8n webhook:', error);
       throw error;

@@ -13,12 +13,11 @@ export const dynamic = 'force-dynamic';
 
 // Mock data for development purposes, will be replaced with real API calls
 const mockConversations: Conversation[] = [
-  { id: '1', title: 'Conversación de prueba' },
+  { id: '1', title: 'Nueva conversación' },
 ];
 
 const mockMessages: Message[] = [
-  { id: '1', role: 'user', content: 'Hola' },
-  { id: '2', role: 'assistant', content: 'Hola, ¿en qué puedo ayudarte hoy?' },
+  { id: '1', role: 'assistant', content: 'Bienvenido al chat de la escuela sabatica. ¿En qué puedo ayudarte hoy?' },
 ];
 
 export default function ChatLayout() {
