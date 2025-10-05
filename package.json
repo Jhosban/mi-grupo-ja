@@ -21,6 +21,8 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "framer-motion": "^10.16.16",
+    "google-auth-library": "^10.4.0",
+    "googleapis": "^161.0.0",
     "lucide-react": "^0.299.0",
     "next": "14.0.4",
     "next-auth": "4.24.5",

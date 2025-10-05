@@ -16,11 +16,26 @@ model User {
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  metadata      Json?     // Campo para almacenar metadatos adicionales como tokens de Google Drive
   sessions      Session[]
   accounts      Account[] // Relación con cuentas OAuth
   conversations Conversation[]
   userRoles     UserRole[]
+  driveTokens   DriveToken?
   @@map("users")
+}
+
+// Modelo para almacenar tokens de Google Drive
+model DriveToken {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  accessToken   String   @db.Text
+  refreshToken  String?  @db.Text
+  expiryDate    DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("drive_tokens")
 }
 
 model Conversation {

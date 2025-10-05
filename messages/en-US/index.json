@@ -40,5 +40,12 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No"
+  },
+  "FileUpload": {
+    "dragDropText": "Drag and drop files here or click to select",
+    "allowedFileTypes": "Only PDF and CSV files",
+    "selectFile": "Select file",
+    "uploadFile": "Upload file",
+    "uploading": "Uploading..."
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { env } from '@/lib/env';
 
 export type N8nRequestBody = {
   chatInput: string;
@@ -21,6 +22,15 @@ export type N8nResponseBody = {
   };
 };
 
+export type N8nFileUploadResponse = {
+  success: boolean;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  message?: string;
+};
+
 export type SSEEvent = {
   type: 'message' | 'sources' | 'usage' | 'complete' | 'error';
   data: any;
@@ -28,23 +38,26 @@ export type SSEEvent = {
 
 export class N8nClient {
   private endpointUrl: string;
+  private fileUploadUrl: string;
   private apiKey?: string;
 
   constructor() {
-    // Determinar qué URL utilizar según la configuración
-    const useProd = process.env.N8N_USE_PROD === 'true';
+    // Usar la configuración centralizada de env.ts
+    const useProd = env.n8n.useProd;
     
     if (useProd) {
-      // Usar el webhook de producción
-      this.endpointUrl = process.env.N8N_PROD_WEBHOOK_URL || 'https://hooks.singularity.cyou/webhook/d6ac9b0e-d367-43a0-9953-6071ccc35cb7';
-      console.log('Usando webhook de PRODUCCIÓN');
+      // Usar los webhooks de producción
+      this.endpointUrl = env.n8n.prodWebhookUrl;
+      this.fileUploadUrl = env.n8n.prodFileUploadUrl;
+      console.log('Usando webhooks de PRODUCCIÓN', { endpoint: this.endpointUrl, fileUpload: this.fileUploadUrl });
     } else {
-      // Usar el webhook de prueba
-      this.endpointUrl = process.env.N8N_TEST_WEBHOOK_URL || 'https://flows.singularity.cyou/webhook-test/d6ac9b0e-d367-43a0-9953-6071ccc35cb7';
-      console.log('Usando webhook de PRUEBA');
+      // Usar los webhooks de prueba
+      this.endpointUrl = env.n8n.testWebhookUrl;
+      this.fileUploadUrl = env.n8n.testFileUploadUrl;
+      console.log('Usando webhooks de PRUEBA', { endpoint: this.endpointUrl, fileUpload: this.fileUploadUrl });
     }
     
-    this.apiKey = process.env.N8N_API_KEY;
+    this.apiKey = env.n8n.apiKey;
   }
 
   async sendMessage(message: string, topK?: number, temperature?: number): Promise<N8nResponseBody> {
@@ -64,7 +77,7 @@ export class N8nClient {
       temperature: temperature ?? 0.7,
       metadata: {
         source: 'webapp',
-        appVersion: process.env.APP_VERSION || '1.0.0'
+        appVersion: env.appVersion
       }
     };
 
@@ -87,6 +100,45 @@ export class N8nClient {
     } catch (error) {
       console.error('Error calling n8n webhook:', error);
       throw error;
+    }
+  }
+
+  async uploadFile(file: File): Promise<N8nFileUploadResponse> {
+    console.log('N8nClient: Iniciando subida de archivo', file.name);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      console.log('N8nClient: FormData creado con el archivo', file.name);
+      
+      // Enviar a la URL de n8n para subida de archivos
+      console.log('N8nClient: Enviando archivo a', this.fileUploadUrl);
+      const response = await fetch(this.fileUploadUrl, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      console.log('N8nClient: Respuesta recibida, status:', response.status);
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('N8nClient: Datos recibidos:', data);
+      
+      return {
+        success: true,
+        fileUrl: data.fileUrl || data.url || data.downloadUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      };
+    } catch (error) {
+      console.error('Error uploading file to n8n:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error during file upload',
+      };
     }
   }
 }
