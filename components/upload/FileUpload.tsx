@@ -5,9 +5,10 @@ import { useTranslations } from 'next-intl';
 interface FileUploadProps {
   onUploadComplete?: (fileData: any) => void;
   onError?: (error: any) => void;
+  model?: 'gemini' | 'openai';
 }
 
-export default function FileUpload({ onUploadComplete, onError }: FileUploadProps) {
+export default function FileUpload({ onUploadComplete, onError, model = 'gemini' }: FileUploadProps) {
   const t = useTranslations('FileUpload');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -61,7 +62,9 @@ export default function FileUpload({ onUploadComplete, onError }: FileUploadProp
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      console.log('Cliente: FormData creado con el archivo', selectedFile.name);
+      // Añadir el modelo seleccionado al formData
+      formData.append('model', model);
+      console.log('Cliente: FormData creado con el archivo', selectedFile.name, 'y modelo', model);
       
       // Subir el archivo utilizando nuestro endpoint que utiliza n8n
       console.log('Cliente: Enviando solicitud a /api/uploads');

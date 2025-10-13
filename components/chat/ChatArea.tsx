@@ -2,17 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { ExternalLink, PaperclipIcon } from 'lucide-react';
+import { ExternalLink, PaperclipIcon, CheckCircle } from 'lucide-react';
 import { ChatInput } from './ChatInput';
 import { SourcesView } from './SourcesView';
 import { ChatAreaProps, Message } from '@/types/chat.types';
 import FileUpload from '@/components/upload/FileUpload';
 import { Button } from '@/components/ui/button';
 
-export function ChatArea({ messages, isLoading, onSendMessage }: ChatAreaProps) {
+export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'gemini' }: ChatAreaProps) {
   const t = useTranslations('chat');
   const [showSources, setShowSources] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
   const [activeSources, setActiveSources] = useState<Array<{ title: string; url: string; snippet: string }>>([]);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   
@@ -53,6 +55,17 @@ export function ChatArea({ messages, isLoading, onSendMessage }: ChatAreaProps) 
       };
     }
   }, [showFileUpload]);
+  
+  // Función para mostrar una notificación temporal
+  const showTemporaryNotification = (message: string) => {
+    setNotificationMessage(message);
+    setShowNotification(true);
+    
+    // Ocultar automáticamente después de 3 segundos
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 3000);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -122,29 +135,23 @@ export function ChatArea({ messages, isLoading, onSendMessage }: ChatAreaProps) 
             className="absolute bottom-full w-full p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-t-lg shadow-lg"
           >
             <FileUpload 
+              model={currentModel} 
               onUploadComplete={(fileData) => {
                 console.log("ChatArea: Archivo subido correctamente", fileData);
                 setShowFileUpload(false);
-                // Añadir un mensaje con la información del archivo subido
-                onSendMessage(`[Archivo subido]: ${fileData.file.name} (${fileData.file.webViewLink || 'Sin enlace'})`);
+                // Mostrar notificación en lugar de enviar un mensaje
+                showTemporaryNotification(t('FileUpload.uploadSuccess'));
               }} 
               onError={(error) => {
                 console.error('ChatArea: Error uploading file:', error);
                 setShowFileUpload(false);
+                showTemporaryNotification(t('FileUpload.uploadError'));
               }} 
             />
           </div>
         )}
 
         <div className="flex items-center border-t border-gray-200 dark:border-gray-700 p-2">
-          <button
-            id="upload-button"
-            onClick={() => setShowFileUpload(!showFileUpload)}
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 mr-2"
-            aria-label="Subir archivo"
-          >
-            <PaperclipIcon className="h-5 w-5" />
-          </button>
           <div className="flex-1">
             <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
           </div>
@@ -156,6 +163,14 @@ export function ChatArea({ messages, isLoading, onSendMessage }: ChatAreaProps) 
         isOpen={showSources}
         onClose={() => setShowSources(false)}
       />
+      
+      {/* Notificación pop-up */}
+      {showNotification && (
+        <div className="fixed top-16 right-4 z-50 flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 animate-fade-in-out">
+          <CheckCircle className="h-4 w-4 mr-2" />
+          <span className="font-medium">{notificationMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

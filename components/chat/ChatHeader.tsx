@@ -2,21 +2,32 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Menu, Settings, LogOut, User } from 'lucide-react';
+import { Menu, Settings, LogOut, User, ChevronDown } from 'lucide-react';
 import { ChatHeaderProps } from '@/types/chat.types';
 import { signOut, useSession } from 'next-auth/react';
 
-export function ChatHeader({ title, onToggleSidebar, onOpenSettings }: ChatHeaderProps) {
+export function ChatHeader({ 
+  title, 
+  onToggleSidebar, 
+  onOpenSettings, 
+  currentModel = 'gemini', 
+  onModelChange 
+}: ChatHeaderProps) {
   const t = useTranslations('chat');
   const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
   
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+      }
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target as Node)) {
+        setShowModelDropdown(false);
       }
     }
     
@@ -35,7 +46,7 @@ export function ChatHeader({ title, onToggleSidebar, onOpenSettings }: ChatHeade
   };
   
   return (
-    <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
       <div className="flex items-center justify-between h-16 px-4">
         <div className="flex items-center">
           <button
@@ -46,6 +57,50 @@ export function ChatHeader({ title, onToggleSidebar, onOpenSettings }: ChatHeade
             <span className="sr-only">Toggle sidebar</span>
           </button>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
+          
+          {/* Selector de modelo */}
+          {onModelChange && (
+            <div className="relative ml-4" ref={modelDropdownRef}>
+              <button 
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className="flex items-center px-3 py-1 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+              >
+                <span className="mr-1">{currentModel === 'gemini' ? t('settings.modelGemini') : t('settings.modelOpenAI')}</span>
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              
+              {showModelDropdown && (
+                <div className="absolute left-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() => {
+                      if (onModelChange) onModelChange('gemini');
+                      setShowModelDropdown(false);
+                    }}
+                    className={`block w-full text-left px-4 py-2 text-sm ${
+                      currentModel === 'gemini' 
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {t('settings.modelGemini')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (onModelChange) onModelChange('openai');
+                      setShowModelDropdown(false);
+                    }}
+                    className={`block w-full text-left px-4 py-2 text-sm ${
+                      currentModel === 'openai' 
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {t('settings.modelOpenAI')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="flex items-center">

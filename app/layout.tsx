@@ -19,7 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <head />
+      <head>
+        <link rel="icon" href="/public/logo-migrupoja.ico" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );

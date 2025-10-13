@@ -10,13 +10,15 @@
       "delete": "Delete",
       "viewSources": "View Sources",
       "typing": "Typing...",
-      "thinking": "Thinking..."
+      "thinking": "Thinking...",
+      "uploadFile": "Upload File"
     },
     "sidebar": {
       "conversations": "Conversations",
       "search": "Search conversations",
       "noConversations": "No conversations yet",
-      "deleteConfirm": "Are you sure you want to delete this conversation?"
+      "deleteConfirm": "Are you sure you want to delete this conversation?",
+      "delete": "Delete"
     },
     "settings": {
       "title": "Settings",
@@ -27,7 +29,10 @@
       "theme": "Theme",
       "save": "Save",
       "cancel": "Cancel",
-      "logout": "Logout"
+      "logout": "Logout",
+      "modelSelector": "Model",
+      "modelGemini": "Gemini",
+      "modelOpenAI": "OpenAI"
     }
   },
   "common": {
@@ -46,6 +51,8 @@
     "allowedFileTypes": "Only PDF and CSV files",
     "selectFile": "Select file",
     "uploadFile": "Upload file",
-    "uploading": "Uploading..."
+    "uploading": "Uploading...",
+    "uploadSuccess": "File uploaded successfully",
+    "uploadError": "Error uploading file"
   }
 }

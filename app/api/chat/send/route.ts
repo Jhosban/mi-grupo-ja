@@ -1,6 +1,10 @@
 // app/api/chat/send/route.ts
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { N8nClient } from '@/lib/services/n8n-client';
+import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/auth/auth';
+import { MessageRole } from '@prisma/client';
 
 export const runtime = 'nodejs'; // SSE estable
 
@@ -18,7 +22,29 @@ export async function POST(req: NextRequest) {
 // Shared handler for both GET and POST
 async function handleRequest(req: NextRequest) {
   try {
-    let message, conversationId, settings;
+    // Get authenticated session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return new Response(
+        `data: ${JSON.stringify({ 
+          type: 'error', 
+          data: { 
+            message: 'Authentication required', 
+            code: 'UNAUTHORIZED' 
+          } 
+        })}\n\n`, 
+        {
+          headers: { 
+            'Content-Type': 'text/event-stream', 
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          },
+          status: 401
+        }
+      );
+    }
+
+    let message, conversationId, settings, model;
     
     // Check if request is from EventSource (GET with query params) or fetch (POST with body)
     const url = new URL(req.url);
@@ -30,12 +56,72 @@ async function handleRequest(req: NextRequest) {
       message = parsedData.message;
       conversationId = parsedData.conversationId;
       settings = parsedData.settings;
+      model = parsedData.model || 'gemini'; // Por defecto usa Gemini si no se especifica
     } else {
       // Parse from request body (for regular POST)
       const body = await req.json().catch(() => ({}));
       message = body.message;
       conversationId = body.conversationId;
       settings = body.settings;
+      model = body.model || 'gemini'; // Por defecto usa Gemini si no se especifica
+    }
+    
+    // Get user ID from email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true }
+    });
+    
+    if (!user) {
+      return new Response(
+        `data: ${JSON.stringify({ 
+          type: 'error', 
+          data: { 
+            message: 'User not found', 
+            code: 'USER_NOT_FOUND' 
+          } 
+        })}\n\n`, 
+        {
+          headers: { 
+            'Content-Type': 'text/event-stream', 
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          },
+          status: 404
+        }
+      );
+    }
+    
+    // If conversationId is provided, make sure it belongs to the user
+    if (conversationId && conversationId !== 'new') {
+      const conversation = await prisma.conversation.findUnique({
+        where: { 
+          id: conversationId,
+          userId: user.id
+        }
+      });
+      
+      if (!conversation) {
+        // If no conversation found or not belonging to user, create a new one
+        const newConversation = await prisma.conversation.create({
+          data: {
+            title: `Conversación ${new Date().toLocaleString()}`,
+            userId: user.id
+          }
+        });
+        
+        conversationId = newConversation.id;
+      }
+    } else if (!conversationId || conversationId === 'new') {
+      // Create a new conversation if none is provided
+      const newConversation = await prisma.conversation.create({
+        data: {
+          title: `Conversación ${new Date().toLocaleString()}`,
+          userId: user.id
+        }
+      });
+      
+      conversationId = newConversation.id;
     }
     
     if (!message) {
@@ -57,10 +143,19 @@ async function handleRequest(req: NextRequest) {
       );
     }
     
-    // Create N8N client
-    const n8nClient = new N8nClient();
+    // Create N8N client with specified model
+    const n8nClient = new N8nClient(model as 'gemini' | 'openai');
     
     try {
+      // Save user message to the database
+      await prisma.message.create({
+        data: {
+          conversationId,
+          content: message,
+          role: MessageRole.USER
+        }
+      });
+      
       // Send message using the configured N8nClient
       const responseData = await n8nClient.sendMessage(
         message,
@@ -70,6 +165,11 @@ async function handleRequest(req: NextRequest) {
       
       // Create encoder for SSE
       const encoder = new TextEncoder();
+      
+      // Create message object for database
+      let assistantMessageContent = '';
+      let assistantMessageSources = responseData.sources || null;
+      let assistantMessageUsage = responseData.usage || null;
       
       // Create stream
       const stream = new ReadableStream({
@@ -82,6 +182,7 @@ async function handleRequest(req: NextRequest) {
           
           // Send each chunk as a message event
           for (const chunk of chunks) {
+            assistantMessageContent += chunk;
             push({ type: 'message', data: { content: chunk } });
             
             // Add a small delay between chunks to simulate typing
@@ -98,8 +199,48 @@ async function handleRequest(req: NextRequest) {
             push({ type: 'usage', data: { usage: responseData.usage } });
           }
           
-          // Send completion event
-          push({ type: 'complete', data: { ok: true } });
+          // Save assistant response to the database
+          await prisma.message.create({
+            data: {
+              conversationId,
+              content: assistantMessageContent,
+              role: MessageRole.ASSISTANT,
+              sources: assistantMessageSources ? assistantMessageSources as any : undefined,
+              usage: assistantMessageUsage ? assistantMessageUsage as any : undefined
+            }
+          });
+          
+          // Update conversation title if it's the first message
+          const messageCount = await prisma.message.count({
+            where: { conversationId }
+          });
+          
+          if (messageCount <= 2) {
+            // Generate title from first user message
+            const title = message.length > 30 
+              ? message.substring(0, 30) + '...'
+              : message;
+              
+            await prisma.conversation.update({
+              where: { id: conversationId },
+              data: { title }
+            });
+          }
+          
+          // Update conversation's updatedAt
+          await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() }
+          });
+          
+          // Send completion event with conversation ID
+          push({ 
+            type: 'complete', 
+            data: { 
+              ok: true,
+              conversationId
+            } 
+          });
           
           // Close the stream
           controller.close();

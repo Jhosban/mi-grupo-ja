@@ -40,22 +40,23 @@ export class N8nClient {
   private endpointUrl: string;
   private fileUploadUrl: string;
   private apiKey?: string;
+  private model: 'gemini' | 'openai';
 
-  constructor() {
+  constructor(model: 'gemini' | 'openai' = 'gemini') {
+    // Guardar el modelo seleccionado
+    this.model = model;
+    
     // Usar la configuración centralizada de env.ts
     const useProd = env.n8n.useProd;
     
-    if (useProd) {
-      // Usar los webhooks de producción
-      this.endpointUrl = env.n8n.prodWebhookUrl;
-      this.fileUploadUrl = env.n8n.prodFileUploadUrl;
-      console.log('Usando webhooks de PRODUCCIÓN', { endpoint: this.endpointUrl, fileUpload: this.fileUploadUrl });
-    } else {
-      // Usar los webhooks de prueba
-      this.endpointUrl = env.n8n.testWebhookUrl;
-      this.fileUploadUrl = env.n8n.testFileUploadUrl;
-      console.log('Usando webhooks de PRUEBA', { endpoint: this.endpointUrl, fileUpload: this.fileUploadUrl });
-    }
+    // Obtener las URLs según el modelo seleccionado
+    this.endpointUrl = env.n8n.getActiveWebhookUrl(model);
+    this.fileUploadUrl = env.n8n.getActiveFileUploadUrl(model);
+    
+    console.log(`Usando webhooks de ${useProd ? 'PRODUCCIÓN' : 'PRUEBA'} para ${model}`, { 
+      endpoint: this.endpointUrl, 
+      fileUpload: this.fileUploadUrl 
+    });
     
     this.apiKey = env.n8n.apiKey;
   }

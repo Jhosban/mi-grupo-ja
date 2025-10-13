@@ -4,22 +4,22 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
+import { CheckCircle } from 'lucide-react';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
+import FileUpload from '@/components/upload/FileUpload';
 import { Message, Conversation } from '@/types/chat.types';
 
 // Force dynamic rendering to avoid static generation issues with next-intl
 export const dynamic = 'force-dynamic';
 
-// Mock data for development purposes, will be replaced with real API calls
-const mockConversations: Conversation[] = [
-  { id: '1', title: 'Nueva conversación' },
-];
-
-const mockMessages: Message[] = [
-  { id: '1', role: 'assistant', content: 'Bienvenido al chat de la escuela sabatica. ¿En qué puedo ayudarte hoy?' },
-];
+// Initial messages for new conversations
+const welcomeMessage: Message = {
+  id: 'welcome',
+  role: 'assistant', 
+  content: 'Bienvenido al chat de la escuela sabatica. ¿En qué puedo ayudarte hoy?' 
+};
 
 export default function ChatLayout() {
   const t = useTranslations('chat');
@@ -27,33 +27,134 @@ export default function ChatLayout() {
   const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [conversations, setConversations] = useState(mockConversations);
-  const [messages, setMessages] = useState(mockMessages);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>('1');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
   // State for streaming messages
   const [streamingMessage, setStreamingMessage] = useState('');
+  
+  // State for model selection (gemini es el predeterminado)
+  const [currentModel, setCurrentModel] = useState<'gemini' | 'openai'>('gemini');
 
   // Get app name from environment variable
   const appName = process.env.NEXT_PUBLIC_APP_NAME || 'MiChat';
   
-  // Function to create a new conversation
-  const handleNewConversation = () => {
-    const newId = `new-${Date.now()}`;
-    const newConversation = {
-      id: newId,
-      title: `Conversación ${conversations.length + 1}`,
+  // Fetch conversations on component mount
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch('/api/conversations');
+        if (!response.ok) {
+          throw new Error('Failed to fetch conversations');
+        }
+        
+        const data = await response.json();
+        setConversations(data);
+        
+        // If there are conversations, select the most recent one
+        if (data.length > 0) {
+          setActiveConversationId(data[0].id);
+          await fetchMessages(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      }
     };
     
-    setConversations([newConversation, ...conversations]);
-    setActiveConversationId(newId);
-    setMessages([]);
+    fetchConversations();
+  }, []);
+  
+  // Function to fetch messages for a conversation
+  const fetchMessages = async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}/messages`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+      
+      const data = await response.json();
+      if (data.length > 0) {
+        setMessages(data);
+      } else {
+        setMessages([welcomeMessage]);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setMessages([welcomeMessage]);
+    }
+  };
+  
+  // Function to create a new conversation
+  const handleNewConversation = async () => {
+    try {
+      // Formato de fecha más corto y legible: DD/MM/YYYY, HH:MM
+      const now = new Date();
+      const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}, ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: `${formattedDate}`,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create conversation');
+      }
+      
+      const newConversation = await response.json();
+      
+      setConversations([newConversation, ...conversations]);
+      setActiveConversationId(newConversation.id);
+      setMessages([welcomeMessage]);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
   };
   
   // Function to select an existing conversation
-  const handleSelectConversation = (id: string) => {
+  const handleSelectConversation = async (id: string) => {
     setActiveConversationId(id);
-    // In a real app, you would fetch messages for this conversation here
+    await fetchMessages(id);
+  };
+  
+  // Function to delete a conversation
+  const handleDeleteConversation = async (id: string) => {
+    try {
+      const response = await fetch(`/api/conversations?id=${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete conversation');
+      }
+      
+      // Remove from local state
+      setConversations(conversations.filter(conv => conv.id !== id));
+      
+      // If the active conversation was deleted, select another one or create new
+      if (activeConversationId === id) {
+        if (conversations.length > 1) {
+          const nextConversation = conversations.find(conv => conv.id !== id);
+          if (nextConversation) {
+            setActiveConversationId(nextConversation.id);
+            await fetchMessages(nextConversation.id);
+          } else {
+            setActiveConversationId(null);
+            setMessages([welcomeMessage]);
+          }
+        } else {
+          setActiveConversationId(null);
+          setMessages([welcomeMessage]);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+    }
   };
   
   // Function to send a message
@@ -84,6 +185,35 @@ export default function ChatLayout() {
         content: ''
       }]);
       
+      // If no active conversation, create one first
+      let conversationId = activeConversationId;
+      if (!conversationId) {
+        try {
+          const convResponse = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              // Formato de fecha más corto y legible: DD/MM/YYYY, HH:MM
+              title: `${new Date().getDate().toString().padStart(2, '0')}/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}, ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`,
+            }),
+          });
+          
+          if (!convResponse.ok) {
+            throw new Error('Failed to create conversation');
+          }
+          
+          const newConversation = await convResponse.json();
+          setConversations([newConversation, ...conversations]);
+          setActiveConversationId(newConversation.id);
+          conversationId = newConversation.id;
+        } catch (error) {
+          console.error('Error creating conversation:', error);
+          return;
+        }
+      }
+      
       // Configure EventSource for SSE - Use POST directly instead of GET with query params
       const response = await fetch('/api/chat/send', {
         method: 'POST',
@@ -92,7 +222,8 @@ export default function ChatLayout() {
         },
         body: JSON.stringify({
           message,
-          conversationId: activeConversationId,
+          conversationId,
+          model: currentModel, // Incluir el modelo seleccionado
           settings: { topK: 5, temperature: 0.7 }
         })
       });
@@ -180,8 +311,24 @@ export default function ChatLayout() {
     }
   };
   
-  // Set up settings modal
+  // Set up modals
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  
+  // Notificaciones
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  
+  // Función para mostrar una notificación temporal
+  const showTemporaryNotification = (message: string) => {
+    setNotificationMessage(message);
+    setShowNotification(true);
+    
+    // Ocultar automáticamente después de 3 segundos
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 3000);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900">
@@ -192,6 +339,9 @@ export default function ChatLayout() {
           activeConversationId={activeConversationId}
           onNewConversation={handleNewConversation}
           onSelectConversation={handleSelectConversation}
+          onDeleteConversation={handleDeleteConversation}
+          onShowFileUpload={() => setShowFileUpload(true)}
+          currentModel={currentModel}
         />
       </div>
       
@@ -201,12 +351,15 @@ export default function ChatLayout() {
           title={appName}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          currentModel={currentModel}
+          onModelChange={(model) => setCurrentModel(model)}
         />
         
         <ChatArea
           messages={messages}
           isLoading={isLoading}
           onSendMessage={handleSendMessage}
+          currentModel={currentModel}
         />
       </div>
 
@@ -225,6 +378,47 @@ export default function ChatLayout() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* File Upload Modal */}
+      {showFileUpload && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">{t('interface.uploadFile')}</h2>
+            <div className="mt-2 mb-4">
+              <FileUpload 
+                model={currentModel}
+                onUploadComplete={(fileData: any) => {
+                  console.log("ChatPage: Archivo subido correctamente", fileData);
+                  setShowFileUpload(false);
+                  // Mostrar notificación
+                  showTemporaryNotification("Archivo subido correctamente");
+                }}
+                onError={(error: any) => {
+                  console.error('ChatPage: Error uploading file:', error);
+                  setShowFileUpload(false);
+                  showTemporaryNotification("Error al subir el archivo");
+                }}
+              />
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowFileUpload(false)}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-md transition-colors"
+              >
+                {t('settings.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Notificación pop-up */}
+      {showNotification && (
+        <div className="fixed top-16 right-4 z-50 flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 animate-fade-in-out">
+          <CheckCircle className="h-4 w-4 mr-2" />
+          <span className="font-medium">{notificationMessage}</span>
         </div>
       )}
     </div>

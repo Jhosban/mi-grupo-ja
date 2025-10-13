@@ -28,6 +28,7 @@ export interface ChatAreaProps {
   messages: Message[];
   isLoading: boolean;
   onSendMessage: (message: string) => void;
+  currentModel?: 'gemini' | 'openai';
 }
 
 export interface ConversationSidebarProps {
@@ -35,12 +36,17 @@ export interface ConversationSidebarProps {
   activeConversationId: string | null;
   onNewConversation: () => void;
   onSelectConversation: (id: string) => void;
+  onDeleteConversation?: (id: string) => void;
+  onShowFileUpload?: () => void;
+  currentModel?: 'gemini' | 'openai';
 }
 
 export interface ChatHeaderProps {
   title: string;
   onToggleSidebar: () => void;
   onOpenSettings: () => void;
+  currentModel?: 'gemini' | 'openai';
+  onModelChange?: (model: 'gemini' | 'openai') => void;
 }
 
 export interface SourceViewProps {

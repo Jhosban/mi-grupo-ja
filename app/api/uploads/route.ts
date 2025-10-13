@@ -7,6 +7,10 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    // Obtenemos el modelo seleccionado del formData (si no existe, usamos 'gemini' por defecto)
+    const model = (formData.get('model') as string) || 'gemini';
+    
+    console.log('Servidor: Modelo seleccionado para la subida:', model);
     
     if (!file) {
       console.error('Servidor: No se encontró el archivo en la solicitud');
@@ -18,8 +22,8 @@ export async function POST(request: NextRequest) {
     
     console.log('Servidor: Archivo recibido:', file.name, file.size, 'bytes');
 
-    // Utilizamos el cliente de n8n para subir el archivo
-    const n8nClient = new N8nClient();
+    // Utilizamos el cliente de n8n para subir el archivo con el modelo seleccionado
+    const n8nClient = new N8nClient(model as 'gemini' | 'openai');
     const uploadResult = await n8nClient.uploadFile(file);
     
     if (!uploadResult.success) {
