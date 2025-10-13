@@ -44,7 +44,7 @@ async function handleRequest(req: NextRequest) {
       );
     }
 
-    let message, conversationId, settings, model;
+  let message: string, conversationId: string, settings: UserSettings | undefined, model: 'gemini' | 'openai';
     
     // Check if request is from EventSource (GET with query params) or fetch (POST with body)
     const url = new URL(req.url);
