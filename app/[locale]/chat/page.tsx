@@ -215,6 +215,10 @@ export default function ChatLayout() {
       }
       
       // Configure EventSource for SSE - Use POST directly instead of GET with query params
+      // Import getActiveBackend to send backend info to server
+      const { getActiveBackend } = await import('@/lib/backend-config');
+      const activeBackend = getActiveBackend();
+      
       const response = await fetch('/api/chat/send', {
         method: 'POST',
         headers: {
@@ -224,6 +228,7 @@ export default function ChatLayout() {
           message,
           conversationId,
           model: currentModel, // Incluir el modelo seleccionado
+          activeBackend, // Incluir el backend activo
           settings: { topK: 5, temperature: 0.7 }
         })
       });
@@ -290,8 +295,38 @@ export default function ChatLayout() {
             } else if (parsedData.type === 'complete') {
               setIsLoading(false);
             } else if (parsedData.type === 'error') {
-              console.error('Error from SSE:', parsedData.data.message);
+              console.error('Error from SSE:', parsedData.data);
               setIsLoading(false);
+              
+              // Mostrar mensaje de error y sugerir cargar archivo si es necesario
+              const errorMessage = parsedData.data.message || 'Error desconocido';
+              const errorCode = parsedData.data.code;
+              
+              setMessages((prev) => {
+                const updatedMessages = [...prev];
+                const lastMessage = updatedMessages[updatedMessages.length - 1];
+                
+                // Si el último mensaje es el del asistente que estaba vacío, lo reemplazamos con el error
+                if (lastMessage && lastMessage.role === 'assistant' && lastMessage.id === assistantMessageId && lastMessage.content === '') {
+                  updatedMessages[updatedMessages.length - 1] = {
+                    ...lastMessage,
+                    content: `❌ ${errorMessage}`
+                  };
+                } else {
+                  updatedMessages.push({
+                    id: `error-${Date.now()}`,
+                    role: 'assistant' as const,
+                    content: `❌ ${errorMessage}`
+                  });
+                }
+                
+                return updatedMessages;
+              });
+              
+              // Si es error de archivo no cargado, mostrar notificación para cargar
+              if (errorCode === 'PYTHON_FILE_REQUIRED') {
+                showTemporaryNotification(t('FileUpload.uploadRequired') || 'Por favor, carga un archivo primero');
+              }
             }
           } catch (e) {
             console.error('Error parsing SSE message:', e);
@@ -360,6 +395,7 @@ export default function ChatLayout() {
           isLoading={isLoading}
           onSendMessage={handleSendMessage}
           currentModel={currentModel}
+          conversationId={activeConversationId || undefined}
         />
       </div>
 
@@ -389,6 +425,7 @@ export default function ChatLayout() {
             <div className="mt-2 mb-4">
               <FileUpload 
                 model={currentModel}
+                conversationId={activeConversationId || undefined}
                 onUploadComplete={(fileData: any) => {
                   console.log("ChatPage: Archivo subido correctamente", fileData);
                   setShowFileUpload(false);

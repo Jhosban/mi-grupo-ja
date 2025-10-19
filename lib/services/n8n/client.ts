@@ -1,64 +1,32 @@
-import { NextResponse } from 'next/server';
-import { env } from '@/lib/env';
-
-export type N8nRequestBody = {
-  chatInput: string;
-  topK?: number;
-  temperature?: number;
-  history?: { role: 'USER' | 'ASSISTANT' | 'SYSTEM', content: string }[];
-  metadata?: Record<string, unknown>;
-};
-
-export type N8nResponseBody = {
-  output: string;
-  sources?: {
-    title: string;
-    url: string;
-    snippet: string;
-  }[];
-  usage?: {
-    tokensInput: number;
-    tokensOutput: number;
-  };
-};
-
-export type N8nFileUploadResponse = {
-  success: boolean;
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: number;
-  fileType?: string;
-  message?: string;
-};
-
-export type SSEEvent = {
-  type: 'message' | 'sources' | 'usage' | 'complete' | 'error';
-  data: any;
-};
+import { n8nConfig } from './config';
+import { 
+  N8nRequestBody, 
+  N8nResponseBody, 
+  N8nFileUploadResponse, 
+  N8nModel,
+  SSEEvent 
+} from './types';
 
 export class N8nClient {
   private endpointUrl: string;
   private fileUploadUrl: string;
   private apiKey?: string;
-  private model: 'gemini' | 'openai';
+  private model: N8nModel;
 
-  constructor(model: 'gemini' | 'openai' = 'gemini') {
+  constructor(model: N8nModel = 'gemini') {
     // Guardar el modelo seleccionado
     this.model = model;
     
-    // Usar la configuración centralizada de env.ts
-    const useProd = env.n8n.useProd;
-    
     // Obtener las URLs según el modelo seleccionado
-    this.endpointUrl = env.n8n.getActiveWebhookUrl(model);
-    this.fileUploadUrl = env.n8n.getActiveFileUploadUrl(model);
+    this.endpointUrl = n8nConfig.getWebhookUrl(model);
+    this.fileUploadUrl = n8nConfig.getFileUploadUrl(model);
     
-    console.log(`Usando webhooks de ${useProd ? 'PRODUCCIÓN' : 'PRUEBA'} para ${model}`, { 
+    console.log(`Usando webhooks de ${n8nConfig.useProd ? 'PRODUCCIÓN' : 'PRUEBA'} para ${model}`, { 
       endpoint: this.endpointUrl, 
       fileUpload: this.fileUploadUrl 
     });
     
-    this.apiKey = env.n8n.apiKey;
+    this.apiKey = n8nConfig.apiKey;
   }
 
   async sendMessage(message: string, topK?: number, temperature?: number): Promise<N8nResponseBody> {
@@ -78,7 +46,7 @@ export class N8nClient {
       temperature: temperature ?? 0.7,
       metadata: {
         source: 'webapp',
-        appVersion: env.appVersion
+        appVersion: '1.0.0'
       }
     };
 

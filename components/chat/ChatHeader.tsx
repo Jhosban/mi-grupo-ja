@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Menu, Settings, LogOut, User, ChevronDown } from 'lucide-react';
 import { ChatHeaderProps } from '@/types/chat.types';
 import { signOut, useSession } from 'next-auth/react';
+import BackendSelector from '@/components/ui/BackendSelector';
+import { getActiveBackend } from '@/lib/backend-config';
 
 export function ChatHeader({ 
   title, 
@@ -17,6 +19,7 @@ export function ChatHeader({
   const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [activeBackend, setActiveBackend] = useState<'n8n' | 'python'>('n8n');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   
@@ -36,6 +39,33 @@ export function ChatHeader({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Actualizar el backend activo cuando cambie
+  useEffect(() => {
+    const backend = getActiveBackend();
+    setActiveBackend(backend);
+  }, []);
+
+  // Escuchar cambios en localStorage para el backend
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const backend = getActiveBackend();
+      setActiveBackend(backend);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // También escuchar cambios en el backend usando un intervalo
+    const interval = setInterval(() => {
+      const backend = getActiveBackend();
+      setActiveBackend(backend);
+    }, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
   
   // Handle logout
   const handleLogout = async () => {
@@ -44,6 +74,9 @@ export function ChatHeader({
     const locale = window.location.pathname.split('/')[1];
     await signOut({ callbackUrl: `/${locale}/login` });
   };
+
+  // Solo mostrar el selector de modelo si el backend es n8n
+  const canChangeModel = activeBackend === 'n8n';
   
   return (
     <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
@@ -58,8 +91,8 @@ export function ChatHeader({
           </button>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
           
-          {/* Selector de modelo */}
-          {onModelChange && (
+          {/* Selector de modelo - Solo visible cuando se usa n8n */}
+          {onModelChange && canChangeModel && (
             <div className="relative ml-4" ref={modelDropdownRef}>
               <button 
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
@@ -101,6 +134,21 @@ export function ChatHeader({
               )}
             </div>
           )}
+
+          {/* Selector de modelo deshabilitado cuando se usa Python */}
+          {onModelChange && !canChangeModel && (
+            <div className="ml-4">
+              <div className="flex items-center px-3 py-1 text-sm font-medium rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-50">
+                <span className="mr-1">{currentModel === 'gemini' ? t('settings.modelGemini') : t('settings.modelOpenAI')}</span>
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </div>
+          )}
+          
+          {/* Selector de Backend */}
+          <div className="ml-4">
+            <BackendSelector />
+          </div>
         </div>
         
         <div className="flex items-center">

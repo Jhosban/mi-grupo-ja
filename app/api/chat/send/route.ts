@@ -1,10 +1,12 @@
 // app/api/chat/send/route.ts
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { N8nClient } from '@/lib/services/n8n-client';
+import { BackendService } from '@/lib/services/backend-service';
+import { getActiveBackend } from '@/lib/backend-config';
 import { prisma } from '@/lib/db';
 import { authOptions } from '@/lib/auth/auth';
 import { MessageRole } from '@prisma/client';
+import { formatSessionInfo } from '@/lib/services/shared';
 
 export const runtime = 'nodejs'; // SSE estable
 
@@ -44,7 +46,7 @@ async function handleRequest(req: NextRequest) {
       );
     }
 
-  let message: string, conversationId: string, settings: UserSettings | undefined, model: 'gemini' | 'openai';
+  let message: string, conversationId: string, settings: UserSettings | undefined, model: 'gemini' | 'openai', activeBackend: any;
     
     // Check if request is from EventSource (GET with query params) or fetch (POST with body)
     const url = new URL(req.url);
@@ -57,6 +59,7 @@ async function handleRequest(req: NextRequest) {
       conversationId = parsedData.conversationId;
       settings = parsedData.settings;
       model = parsedData.model || 'gemini'; // Por defecto usa Gemini si no se especifica
+      activeBackend = parsedData.activeBackend;
     } else {
       // Parse from request body (for regular POST)
       const body = await req.json().catch(() => ({}));
@@ -64,6 +67,12 @@ async function handleRequest(req: NextRequest) {
       conversationId = body.conversationId;
       settings = body.settings;
       model = body.model || 'gemini'; // Por defecto usa Gemini si no se especifica
+      activeBackend = body.activeBackend;
+    }
+    
+    // Validar y normalizar el backend
+    if (!['python', 'n8n'].includes(activeBackend)) {
+      activeBackend = 'n8n';
     }
     
     // Get user ID from email
@@ -143,8 +152,8 @@ async function handleRequest(req: NextRequest) {
       );
     }
     
-    // Create N8N client with specified model
-    const n8nClient = new N8nClient(model as 'gemini' | 'openai');
+    // Create backend service with the active backend from the client
+    const backendService = new BackendService(model as 'gemini' | 'openai', activeBackend);
     
     try {
       // Save user message to the database
@@ -156,11 +165,41 @@ async function handleRequest(req: NextRequest) {
         }
       });
       
-      // Send message using the configured N8nClient
-      const responseData = await n8nClient.sendMessage(
+      // Obtener chatbotId si está disponible en la conversación
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId }
+      });
+      
+      console.log('📋 Conversación encontrada:', conversation?.id);
+      console.log('📋 Backend activo:', activeBackend);
+      console.log('📋 Settings de la conversación:', JSON.stringify(conversation?.settings, null, 2));
+      
+      // Obtener chatbotId según el backend
+      let chatbotId: string | undefined;
+      
+      if (activeBackend === 'python') {
+        // Python requiere un chatbotId
+        const pythonSettings = (conversation?.settings as any)?.pythonSessionData;
+        chatbotId = pythonSettings?.chatbotId || (conversation?.settings as any)?.chatbotId;
+        
+        if (chatbotId) {
+          console.log(`✅ ${formatSessionInfo('python', pythonSettings || conversation?.settings)}`);
+        } else {
+          console.log(`❌ ${formatSessionInfo('python', null)}`);
+        }
+      } else if (activeBackend === 'n8n') {
+        // n8n no requiere chatbotId, pero podemos registrar que está listo
+        console.log(`✅ ${formatSessionInfo('n8n', null)}`);
+      }
+      
+      console.log('� ChatbotId final:', chatbotId || 'N/A');
+      
+      // Send message using the configured backend service
+      const responseData = await backendService.sendMessage(
         message,
         settings?.topK ?? 5,
-        settings?.temperature ?? 0.7
+        settings?.temperature ?? 0.7,
+        chatbotId
       );
       
       // Create encoder for SSE
@@ -256,10 +295,17 @@ async function handleRequest(req: NextRequest) {
         }
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al llamar a N8N';
-      console.error('Error from N8N service:', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error('Error from backend service:', errorMessage);
+      
+      // Determinar el código de error apropiado
+      let errorCode = 'BACKEND_SERVICE_ERROR';
+      if (errorMessage.includes('archivo PDF') || errorMessage.includes('chatbot')) {
+        errorCode = 'PYTHON_FILE_REQUIRED';
+      }
+      
       return new Response(
-        `data: ${JSON.stringify({ type: 'error', data: { message: errorMessage, code: 'N8N_SERVICE_ERROR' } })}\n\n`, 
+        `data: ${JSON.stringify({ type: 'error', data: { message: errorMessage, code: errorCode } })}\n\n`, 
         {
           headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
         }

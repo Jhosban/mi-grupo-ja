@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { getActiveBackend } from '@/lib/backend-config';
 
 interface FileUploadProps {
   onUploadComplete?: (fileData: any) => void;
   onError?: (error: any) => void;
   model?: 'gemini' | 'openai';
+  conversationId?: string;
 }
 
-export default function FileUpload({ onUploadComplete, onError, model = 'gemini' }: FileUploadProps) {
+export default function FileUpload({ onUploadComplete, onError, model = 'gemini', conversationId }: FileUploadProps) {
   const t = useTranslations('FileUpload');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -60,11 +62,54 @@ export default function FileUpload({ onUploadComplete, onError, model = 'gemini'
     setIsUploading(true);
     
     try {
+      // Si no hay conversationId, crear una nueva conversación primero
+      let finalConversationId = conversationId;
+      
+      if (!finalConversationId) {
+        console.log('Cliente: No hay conversationId, creando nueva conversación...');
+        
+        try {
+          const formattedDate = `${new Date().getDate().toString().padStart(2, '0')}/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}, ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+          
+          const convResponse = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              title: `${formattedDate}`,
+            }),
+          });
+          
+          if (!convResponse.ok) {
+            throw new Error('Failed to create conversation');
+          }
+          
+          const newConversation = await convResponse.json();
+          finalConversationId = newConversation.id;
+          console.log('Cliente: Nueva conversación creada:', finalConversationId);
+        } catch (error) {
+          console.error('Cliente: Error creando conversación:', error);
+          throw new Error('No se pudo crear una conversación para el archivo');
+        }
+      }
+      
+      // Obtener el backend activo
+      const activeBackend = getActiveBackend();
+      console.log('Cliente: Backend activo:', activeBackend);
+      
       const formData = new FormData();
       formData.append('file', selectedFile);
       // Añadir el modelo seleccionado al formData
       formData.append('model', model);
-      console.log('Cliente: FormData creado con el archivo', selectedFile.name, 'y modelo', model);
+      // Añadir el conversationId (obligatorio)
+      if (!finalConversationId) {
+        throw new Error('No conversation available for file upload');
+      }
+      formData.append('conversationId', finalConversationId);
+      // Añadir el backend activo
+      formData.append('activeBackend', activeBackend);
+      console.log('Cliente: FormData creado con el archivo', selectedFile.name, 'y modelo', model, 'conversationId:', finalConversationId, 'backend:', activeBackend);
       
       // Subir el archivo utilizando nuestro endpoint que utiliza n8n
       console.log('Cliente: Enviando solicitud a /api/uploads');

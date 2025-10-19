@@ -29,6 +29,7 @@ export interface ChatAreaProps {
   isLoading: boolean;
   onSendMessage: (message: string) => void;
   currentModel?: 'gemini' | 'openai';
+  conversationId?: string;
 }
 
 export interface ConversationSidebarProps {

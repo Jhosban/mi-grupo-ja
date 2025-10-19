@@ -9,7 +9,7 @@ import { ChatAreaProps, Message } from '@/types/chat.types';
 import FileUpload from '@/components/upload/FileUpload';
 import { Button } from '@/components/ui/button';
 
-export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'gemini' }: ChatAreaProps) {
+export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'gemini', conversationId }: ChatAreaProps) {
   const t = useTranslations('chat');
   const [showSources, setShowSources] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
@@ -135,9 +135,12 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
             className="absolute bottom-full w-full p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-t-lg shadow-lg"
           >
             <FileUpload 
-              model={currentModel} 
+              model={currentModel}
+              conversationId={conversationId}
               onUploadComplete={(fileData) => {
                 console.log("ChatArea: Archivo subido correctamente", fileData);
+                console.log("ChatArea: Conversación ID:", conversationId);
+                console.log("ChatArea: fileId/chatbotId recibido:", fileData?.fileId || fileData?.chatbot_id);
                 setShowFileUpload(false);
                 // Mostrar notificación en lugar de enviar un mensaje
                 showTemporaryNotification(t('FileUpload.uploadSuccess'));

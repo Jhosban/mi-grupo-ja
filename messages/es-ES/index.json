@@ -53,6 +53,7 @@
     "uploadFile": "Subir archivo",
     "uploading": "Subiendo...",
     "uploadSuccess": "Archivo subido correctamente",
-    "uploadError": "Error al subir el archivo"
+    "uploadError": "Error al subir el archivo",
+    "uploadRequired": "Por favor, carga un archivo primero para usar el backend de Python"
   }
 }
