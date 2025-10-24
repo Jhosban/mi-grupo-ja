@@ -49,16 +49,16 @@ def query_llm(question, relevant_documents, filename=None):
         print(f"Using API key starting with: {api_prefix}")
         
         print("Sending request to OpenAI API...")
-        response = client.chat.completions.create(
+        response = client.responses.create(
             model="gpt-3.5-turbo",
-            messages=[
+            input=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question}
             ],
-            temperature=0.3,  # Lower temperature for more consistent answers
-        )
-        
-        answer = response.choices[0].message.content
+    temperature=0.3,
+)
+
+        answer = response.output[0].content[0].text
         print(f"Received response from OpenAI: {answer[:100]}...")
         return answer
         
