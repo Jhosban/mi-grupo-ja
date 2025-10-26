@@ -2,6 +2,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Instalar dependencias del sistema para Prisma
+RUN apk add --no-cache \
+    openssl \
+    openssl-dev \
+    libc6-compat \
+    python3 \
+    make \
+    g++
+
 # Instalar PNPM
 RUN npm install -g pnpm@8
 
@@ -25,6 +34,12 @@ RUN pnpm build
 FROM node:20-alpine
 
 WORKDIR /app
+
+# Instalar las mismas dependencias del sistema en producción
+RUN apk add --no-cache \
+    openssl \
+    openssl-dev \
+    libc6-compat
 
 # Instalar PNPM
 RUN npm install -g pnpm@8
