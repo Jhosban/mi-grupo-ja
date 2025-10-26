@@ -53,6 +53,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 
+# Variable de entorno para permitir certificados autofirmados
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
 # Exponer puerto
 EXPOSE 3000
 
