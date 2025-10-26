@@ -30,5 +30,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mi-grupo-ja-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/mi-grupo-ja-frontend:${{ github.sha }}
-  
-  
+
+
+
+            
+            
