@@ -25,6 +25,8 @@ export class PythonClient {
         method: 'POST',
         headers,
         body: JSON.stringify({ question: message }),
+        // @ts-ignore - Ignorar certificados autofirmados
+        rejectUnauthorized: false,
       });
 
       if (!response.ok) {
@@ -79,6 +81,8 @@ export class PythonClient {
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
+        // @ts-ignore - Ignorar certificados autofirmados
+        rejectUnauthorized: false,
       });
       
       console.log('PythonClient: Respuesta recibida, status:', response.status);
