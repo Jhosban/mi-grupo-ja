@@ -80,30 +80,32 @@ export class N8nClient {
       formData.append('file', file);
       console.log('N8nClient: FormData creado con el archivo', file.name);
       
-      // Enviar a la URL de n8n para subida de archivos
-      console.log('N8nClient: Enviando archivo a', this.fileUploadUrl);
+      // Enviar a la URL de n8n para subida de archivos (webhook)
+      console.log('N8nClient: Enviando archivo a webhook', this.fileUploadUrl);
       const response = await fetch(this.fileUploadUrl, {
         method: 'POST',
         body: formData,
       });
       
       console.log('N8nClient: Respuesta recibida, status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Webhook error ${response.status}: ${errorText}`);
       }
       
-      const data = await response.json();
-      console.log('N8nClient: Datos recibidos:', data);
+      // El webhook no responde datos, solo confirma que se subió correctamente
+      console.log('N8nClient: Archivo enviado exitosamente al webhook (sin respuesta de datos)');
       
       return {
         success: true,
-        fileUrl: data.fileUrl || data.url || data.downloadUrl,
+        fileUrl: 'File processed by webhook',
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
       };
     } catch (error) {
-      console.error('Error uploading file to n8n:', error);
+      console.error('Error uploading file to n8n webhook:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error during file upload',

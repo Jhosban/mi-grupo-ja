@@ -9,18 +9,18 @@ export const n8nConfig = {
     prod: {
       webhook: process.env.NEXT_PUBLIC_N8N_PROD_WEBHOOK_URL || 
                process.env.N8N_PROD_WEBHOOK_URL || 
-               'https://hooks.singularity.cyou/webhook/d6ac9b0e-d367-43a0-9953-6071ccc35cb7',
+               'https://sswebhookss.andresblanco.website/webhook/d6ac9b0e-d367-43a0-9953-6071ccc35cb7',
       fileUpload: process.env.NEXT_PUBLIC_N8N_PROD_FILE_UPLOAD_URL || 
                  process.env.N8N_PROD_FILE_UPLOAD_URL || 
-                 'https://hooks.singularity.cyou/form/82848bc4-5ea2-4e5a-8bb6-3c09b94a8c5d',
+                 'https://sswebhookss.andresblanco.website/form/82848bc4-5ea2-4e5a-8bb6-3c09b94a8c5d',
     },
     test: {
       webhook: process.env.NEXT_PUBLIC_N8N_TEST_WEBHOOK_URL || 
               process.env.N8N_TEST_WEBHOOK_URL || 
-              'https://flows.singularity.cyou/webhook-test/d6ac9b0e-d367-43a0-9953-6071ccc35cb7',
+              'https://ssn8nss.andresblanco.website/webhook-test/d6ac9b0e-d367-43a0-9953-6071ccc35cb7',
       fileUpload: process.env.NEXT_PUBLIC_N8N_TEST_FILE_UPLOAD_URL || 
                  process.env.N8N_TEST_FILE_UPLOAD_URL || 
-                 'https://flows.singularity.cyou/form-test/82848bc4-5ea2-4e5a-8bb6-3c09b94a8c5d',
+                 'https://ssn8nss.andresblanco.website/form-test/82848bc4-5ea2-4e5a-8bb6-3c09b94a8c5d',
     }
   },
   
@@ -28,15 +28,15 @@ export const n8nConfig = {
   openai: {
     prod: {
       webhook: process.env.N8N_PROD_WEBHOOK_URL_OPENAI || 
-              'https://hooks.singularity.cyou/webhook/08e3bc57-0bff-4d7a-ba05-197dad2e7a5e',
+              'https://sswebhookss.andresblanco.website/webhook/595a3632-72af-4cdb-91df-efb7e783fec1',
       fileUpload: process.env.N8N_PROD_FILE_UPLOAD_URL_OPENAI || 
-                 'https://hooks.singularity.cyou/form/5e219549-758d-4451-865a-ac0da40cec40',
+                 'https://sswebhookss.andresblanco.website/webhook/595a3632-72af-4cdb-91df-efb7e783fec1',
     },
     test: {
       webhook: process.env.N8N_TEST_WEBHOOK_URL_OPENAI || 
-              'https://flows.singularity.cyou/webhook-test/08e3bc57-0bff-4d7a-ba05-197dad2e7a5e',
+              'https://ssn8nss.andresblanco.website/webhook-test/595a3632-72af-4cdb-91df-efb7e783fec1',
       fileUpload: process.env.N8N_TEST_FILE_UPLOAD_URL_OPENAI || 
-                 'https://flows.singularity.cyou/form-test/5e219549-758d-4451-865a-ac0da40cec40',
+                 'https://ssn8nss.andresblanco.website/webhook-test/595a3632-72af-4cdb-91df-efb7e783fec1',
     }
   },
   

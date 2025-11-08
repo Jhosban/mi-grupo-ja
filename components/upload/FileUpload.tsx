@@ -100,14 +100,12 @@ export default function FileUpload({ onUploadComplete, onError, model = 'gemini'
       
       const formData = new FormData();
       formData.append('file', selectedFile);
-      // Añadir el modelo seleccionado al formData
+      // Solo enviamos los campos mínimos necesarios para nuestro API interno
       formData.append('model', model);
-      // Añadir el conversationId (obligatorio)
       if (!finalConversationId) {
         throw new Error('No conversation available for file upload');
       }
       formData.append('conversationId', finalConversationId);
-      // Añadir el backend activo
       formData.append('activeBackend', activeBackend);
       console.log('Cliente: FormData creado con el archivo', selectedFile.name, 'y modelo', model, 'conversationId:', finalConversationId, 'backend:', activeBackend);
       

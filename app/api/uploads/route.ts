@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
     const uploadResult = await backendService.uploadFile(file);
     
     console.log('📤 Resultado de subida:', uploadResult);
-    console.log('📤 fileId:', uploadResult.fileId);
     
     if (!uploadResult.success) {
       console.error('Servidor: Error al subir archivo:', uploadResult.message);
@@ -97,7 +96,11 @@ export async function POST(request: NextRequest) {
         } else if (activeBackend === 'n8n') {
           newSettings.n8nSessionData = {
             model: model,
-            uploadedAt: new Date().toISOString()
+            fileName: file.name,
+            uploadedAt: new Date().toISOString(),
+            fileSize: file.size,
+            fileType: file.type,
+            processed: true // Indica que fue procesado por webhook
           };
         }
         
@@ -114,12 +117,14 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('Servidor: Archivo subido exitosamente:', uploadResult);
-    // Retornar más información: incluir tanto fileId como fileUrl
+    console.log('Servidor: Archivo subido exitosamente al webhook:', uploadResult);
+    // El webhook no devuelve datos específicos, solo confirmamos la subida
     return NextResponse.json({
-      ...uploadResult,
-      chatbotId: uploadResult.fileId, // Alias para facilitar el acceso en el cliente
-      success: true
+      success: true,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      message: 'Archivo procesado correctamente por el webhook'
     });
     
   } catch (error) {

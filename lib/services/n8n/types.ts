@@ -49,5 +49,9 @@ export type SSEEvent = {
  */
 export type N8nSessionData = {
   model: 'gemini' | 'openai';
+  fileName?: string;
   uploadedAt: string;
+  fileSize?: number;
+  fileType?: string;
+  processed?: boolean; // Indica si fue procesado por webhook
 };
