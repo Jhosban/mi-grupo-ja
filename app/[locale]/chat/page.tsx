@@ -14,13 +14,6 @@ import { Message, Conversation } from '@/types/chat.types';
 // Force dynamic rendering to avoid static generation issues with next-intl
 export const dynamic = 'force-dynamic';
 
-// Initial messages for new conversations
-const welcomeMessage: Message = {
-  id: 'welcome',
-  role: 'assistant', 
-  content: 'Bienvenido al chat de la escuela sabatica. ¿En qué puedo ayudarte hoy?' 
-};
-
 export default function ChatLayout() {
   const t = useTranslations('chat');
   const router = useRouter();
@@ -28,7 +21,7 @@ export default function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
   // State for streaming messages
@@ -77,11 +70,11 @@ export default function ChatLayout() {
       if (data.length > 0) {
         setMessages(data);
       } else {
-        setMessages([welcomeMessage]);
+        setMessages([]);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
-      setMessages([welcomeMessage]);
+      setMessages([]);
     }
   };
   
@@ -110,7 +103,7 @@ export default function ChatLayout() {
       
       setConversations([newConversation, ...conversations]);
       setActiveConversationId(newConversation.id);
-      setMessages([welcomeMessage]);
+      setMessages([]);
     } catch (error) {
       console.error('Error creating conversation:', error);
     }
@@ -145,11 +138,11 @@ export default function ChatLayout() {
             await fetchMessages(nextConversation.id);
           } else {
             setActiveConversationId(null);
-            setMessages([welcomeMessage]);
+            setMessages([]);
           }
         } else {
           setActiveConversationId(null);
-          setMessages([welcomeMessage]);
+          setMessages([]);
         }
       }
     } catch (error) {
@@ -178,12 +171,7 @@ export default function ChatLayout() {
       let messageContent = '';
       let messageSources: Array<{ title: string; url: string; snippet: string }> = [];
       
-      // Add empty assistant message to show immediately
-      setMessages((prev) => [...prev, {
-        id: assistantMessageId,
-        role: 'assistant' as const,
-        content: ''
-      }]);
+      // No agregar mensaje vacío del asistente, solo mostrar el indicador de carga
       
       // If no active conversation, create one first
       let conversationId = activeConversationId;
@@ -260,19 +248,26 @@ export default function ChatLayout() {
               messageContent += parsedData.data.content;
               setStreamingMessage(messageContent);
               
-              // Update messages
+              // Agregar mensaje del asistente si es la primera vez que recibimos contenido
               setMessages((prevMessages) => {
-                const updatedMessages = [...prevMessages];
-                const assistantMessageIndex = updatedMessages.findIndex(m => m.id === assistantMessageId);
+                const existingIndex = prevMessages.findIndex(m => m.id === assistantMessageId);
                 
-                if (assistantMessageIndex >= 0) {
-                  updatedMessages[assistantMessageIndex] = {
-                    ...updatedMessages[assistantMessageIndex],
+                if (existingIndex >= 0) {
+                  // Actualizar mensaje existente
+                  const updatedMessages = [...prevMessages];
+                  updatedMessages[existingIndex] = {
+                    ...updatedMessages[existingIndex],
                     content: messageContent
                   };
+                  return updatedMessages;
+                } else {
+                  // Agregar nuevo mensaje del asistente
+                  return [...prevMessages, {
+                    id: assistantMessageId,
+                    role: 'assistant' as const,
+                    content: messageContent
+                  }];
                 }
-                
-                return updatedMessages;
               });
             } else if (parsedData.type === 'sources' && parsedData.data.sources) {
               messageSources = parsedData.data.sources;

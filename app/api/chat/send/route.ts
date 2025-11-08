@@ -249,23 +249,6 @@ async function handleRequest(req: NextRequest) {
             }
           });
           
-          // Update conversation title if it's the first message
-          const messageCount = await prisma.message.count({
-            where: { conversationId }
-          });
-          
-          if (messageCount <= 2) {
-            // Generate title from first user message
-            const title = message.length > 30 
-              ? message.substring(0, 30) + '...'
-              : message;
-              
-            await prisma.conversation.update({
-              where: { id: conversationId },
-              data: { title }
-            });
-          }
-          
           // Update conversation's updatedAt
           await prisma.conversation.update({
             where: { id: conversationId },

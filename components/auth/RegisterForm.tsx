@@ -100,7 +100,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <div className="w-full max-w-md p-6 space-y-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 max-h-screen overflow-y-auto">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Crear Cuenta</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
@@ -112,7 +112,7 @@ export default function RegisterForm() {
         <div className="p-3 text-sm text-white bg-red-500 rounded">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Nombre

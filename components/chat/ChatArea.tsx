@@ -72,9 +72,17 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
       <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500 dark:text-gray-400 text-center">
-              {t('sidebar.noConversations')}
-            </p>
+            <div className="text-center max-w-2xl mx-auto">
+              <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
+                ¡Hola! Estoy aquí para ayudarte con tus estudios de la Escuela Sabática. 
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-base mt-2">
+                Puedes hacerme preguntas sobre las lecciones, pasajes bíblicos, o cualquier tema relacionado con tu crecimiento espiritual.
+              </p>
+              <p className="text-gray-600 dark:text-gray-300 text-base mt-4 font-medium">
+                ¿Qué te gustaría explorar hoy?
+              </p>
+            </div>
           </div>
         ) : (
           messages.map((message) => (
@@ -92,7 +100,15 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <div 
+                  className="whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: message.content
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      .replace(/\n/g, '<br />')
+                  }}
+                />
               </div>
               
               {message.sources && message.sources.length > 0 && (
@@ -112,14 +128,12 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
         )}
         
         {isLoading && (
-          <div data-testid="message-assistant" className="flex flex-col items-start">
-            <div className="max-w-3xl rounded-lg px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
-              <div className="flex items-center space-x-2">
-                <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-pulse"></div>
-                <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-pulse delay-300"></div>
-                <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-pulse delay-600"></div>
-                <span className="ml-2">{t('interface.typing')}</span>
-              </div>
+          <div className="flex justify-center py-4">
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-pulse"></div>
+              <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-pulse delay-300"></div>
+              <div className="h-2 w-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-pulse delay-600"></div>
+              <span className="ml-2 text-gray-600 dark:text-gray-400 text-sm">{t('interface.typing')}</span>
             </div>
           </div>
         )}

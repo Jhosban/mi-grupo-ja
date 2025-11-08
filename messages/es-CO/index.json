@@ -9,7 +9,7 @@
       "edit": "Editar",
       "delete": "Eliminar",
       "viewSources": "Ver Fuentes",
-      "typing": "Escribiendo...",
+      "typing": "Pensando...",
       "thinking": "Pensando...",
       "uploadFile": "Subir archivo"
     },
@@ -48,10 +48,13 @@
   },
   "FileUpload": {
     "dragDropText": "Arrastra y suelta archivos aquí o haz clic para seleccionar",
-    "allowedFileTypes": "Solo archivos PDF y CSV",
+    "allowedFileTypes": "Solo archivos PDF",
     "selectFile": "Seleccionar archivo",
     "uploadFile": "Subir archivo",
     "uploading": "Subiendo...",
+    "uploadingFile": "Subiendo archivo...",
+    "processingFile": "Procesando archivo...",
+    "uploadComplete": "¡Completado!",
     "uploadSuccess": "Archivo subido correctamente",
     "uploadError": "Error al subir el archivo",
     "uploadRequired": "Por favor, carga un archivo primero para usar el backend de Python"
