@@ -361,9 +361,9 @@ export default function ChatLayout() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900">
+    <div className="flex h-screen bg-white dark:bg-gray-900">
       {/* Sidebar - hidden on small screens by default */}
-      <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block lg:w-64 flex-shrink-0`}>
+      <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block lg:w-60 flex-shrink-0`}>
         <ConversationSidebar
           conversations={conversations}
           activeConversationId={activeConversationId}
@@ -376,22 +376,26 @@ export default function ChatLayout() {
       </div>
       
       {/* Main content area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <ChatHeader
-          title={appName}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          currentModel={currentModel}
-          onModelChange={(model) => setCurrentModel(model)}
-        />
+      <div className="flex-1 h-screen flex flex-col">
+        <div className="flex-shrink-0">
+          <ChatHeader
+            title={appName}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            currentModel={currentModel}
+            onModelChange={(model) => setCurrentModel(model)}
+          />
+        </div>
         
-        <ChatArea
-          messages={messages}
-          isLoading={isLoading}
-          onSendMessage={handleSendMessage}
-          currentModel={currentModel}
-          conversationId={activeConversationId || undefined}
-        />
+        <div className="flex-1">
+          <ChatArea
+            messages={messages}
+            isLoading={isLoading}
+            onSendMessage={handleSendMessage}
+            currentModel={currentModel}
+            conversationId={activeConversationId || undefined}
+          />
+        </div>
       </div>
 
       {/* Settings Modal - can be implemented later if needed */}

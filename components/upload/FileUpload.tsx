@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { getActiveBackend } from '@/lib/backend-config';
+import { Upload, File, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 interface FileUploadProps {
   onUploadComplete?: (fileData: any) => void;
@@ -57,6 +58,13 @@ export default function FileUpload({ onUploadComplete, onError, model = 'gemini'
     }
   };
 
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   // Función para simular progreso de carga
   const simulateProgress = () => {
     setUploadProgress(0);
@@ -85,6 +93,42 @@ export default function FileUpload({ onUploadComplete, onError, model = 'gemini'
         return prev + Math.random() * 10 + 5;
       });
     }, 200);
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'pdf':
+        return '📄';
+      case 'doc':
+      case 'docx':
+        return '📝';
+      case 'xls':
+      case 'xlsx':
+        return '📊';
+      case 'ppt':
+      case 'pptx':
+        return '📽️';
+      case 'txt':
+        return '📃';
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return '🖼️';
+      default:
+        return '📎';
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   const handleUpload = async () => {
@@ -190,145 +234,157 @@ export default function FileUpload({ onUploadComplete, onError, model = 'gemini'
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full">
-      <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all relative ${
-          isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 
-          isUploading ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-950/20' :
-          'border-gray-300 dark:border-gray-700'
-        } ${isUploading ? 'pointer-events-none' : ''}`}
-        onDragEnter={!isUploading ? handleDragEnter : undefined}
-        onDragLeave={!isUploading ? handleDragLeave : undefined}
-        onDragOver={!isUploading ? handleDragOver : undefined}
-        onDrop={!isUploading ? handleDrop : undefined}
-      >
-        {isUploading && (
-          <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 rounded-lg flex flex-col items-center justify-center backdrop-blur-sm z-50">
-            <div className="flex flex-col items-center space-y-4">
-              {/* Spinner animado */}
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
-                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin absolute top-0"></div>
-              </div>
-              
-              {/* Barra de progreso */}
-              <div className="w-full max-w-xs">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {uploadPhase === 'uploading' && t('uploadingFile')}
-                    {uploadPhase === 'processing' && t('processingFile')}
-                    {uploadPhase === 'complete' && t('uploadComplete')}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">
-                    {Math.round(uploadProgress)}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                  <div 
-                    className={`h-3 rounded-full transition-all duration-300 ${
-                      uploadPhase === 'complete' ? 'bg-green-500' : 'bg-blue-500'
-                    }`}
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              {/* Información del archivo */}
-              {selectedFile && (
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <div className="flex flex-col items-center justify-center py-4">
-          <svg
-            className="w-12 h-12 mb-4 text-gray-500 dark:text-gray-400"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-            />
-          </svg>
-          <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-            {selectedFile ? selectedFile.name : t('dragDropText')}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('allowedFileTypes')}</p>
-        </div>
-        <input
-          type="file"
-          className="hidden"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-          disabled={isUploading}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className={`mt-2 transition-all ${
-            isUploading 
-              ? 'opacity-30 cursor-not-allowed bg-gray-100 dark:bg-gray-800' 
-              : 'bg-white dark:bg-gray-700 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-600 dark:hover:text-gray-200'
-          } text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600`}
+    <div className="space-y-6 w-full">
+      {/* Área de drag & drop */}
+      <div className="relative">
+        <div
+          className={`relative border-2 border-dashed rounded-3xl p-8 text-center transition-all duration-300 ${
+            isDragging 
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 scale-105' 
+              : isUploading 
+                ? 'border-blue-400 bg-blue-50/50 dark:bg-blue-950/20' 
+                : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
+          } ${isUploading ? 'pointer-events-none' : 'cursor-pointer'}`}
+          onDragEnter={!isUploading ? handleDragEnter : undefined}
+          onDragLeave={!isUploading ? handleDragLeave : undefined}
+          onDragOver={!isUploading ? handleDragOver : undefined}
+          onDrop={!isUploading ? handleDrop : undefined}
+          onClick={!isUploading ? () => fileInputRef.current?.click() : undefined}
         >
-          {t('selectFile')}
-        </Button>
+          {isUploading ? (
+            /* Overlay de carga */
+            <div className="flex flex-col items-center space-y-6">
+              {/* Indicador de progreso circular */}
+              <div className="relative">
+                <div className="w-20 h-20">
+                  <svg className="transform -rotate-90 w-20 h-20">
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="30"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      fill="transparent"
+                      className="text-gray-200 dark:text-gray-700"
+                    />
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="30"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      fill="transparent"
+                      strokeDasharray={`${2 * Math.PI * 30}`}
+                      strokeDashoffset={`${2 * Math.PI * 30 * (1 - uploadProgress / 100)}`}
+                      className={`transition-all duration-300 ${
+                        uploadPhase === 'complete' 
+                          ? 'text-emerald-500' 
+                          : 'text-indigo-500'
+                      }`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  
+                  {/* Icono central */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {uploadPhase === 'complete' ? (
+                      <CheckCircle className="w-8 h-8 text-emerald-500" />
+                    ) : (
+                      <Upload className="w-8 h-8 text-indigo-500 animate-bounce" />
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Estados de carga */}
+              <div className="text-center space-y-2">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {uploadPhase === 'uploading' && t('uploadingFile')}
+                  {uploadPhase === 'processing' && t('processingFile')}
+                  {uploadPhase === 'complete' && t('uploadComplete')}
+                </h4>
+                
+                <div className="flex items-center justify-center text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
+                  <span className="font-semibold text-lg">{Math.round(uploadProgress)}%</span>
+                </div>
+              </div>
+            </div>
+          ) : selectedFile ? (
+            /* Archivo seleccionado */
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg">
+                  {getFileIcon(selectedFile.name)}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeSelectedFile();
+                  }}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              
+              <div className="text-center space-y-1">
+                <p className="font-medium text-gray-900 dark:text-white text-sm">
+                  {selectedFile.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatFileSize(selectedFile.size)}
+                </p>
+              </div>
+              
+              <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">
+                Hacer clic para cambiar archivo
+              </p>
+            </div>
+          ) : (
+            /* Estado inicial */
+            <div className="flex flex-col items-center space-y-6">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center">
+                <Upload className="w-8 h-8 text-gray-400" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Sube tu archivo
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Arrastra y suelta aquí o{" "}
+                  <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                    haz clic para explorar
+                  </span>
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Soporta: PDF, DOC, XLS, PPT, TXT, Imágenes
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <input
+            type="file"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+            disabled={isUploading}
+          />
+        </div>
       </div>
 
-      <Button
-        onClick={handleUpload}
-        disabled={!selectedFile || isUploading}
-        className={`w-full transition-all duration-300 ${
-          isUploading 
-            ? 'bg-blue-400 cursor-not-allowed' 
-            : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
-        } text-white`}
-      >
-        {isUploading ? (
-          <div className="flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-            <span>
-              {uploadPhase === 'uploading' && t('uploading')}
-              {uploadPhase === 'processing' && t('processingFile')}
-              {uploadPhase === 'complete' && t('uploadComplete')}
-            </span>
-          </div>
-        ) : (
-          <>
-            <svg 
-              className="w-4 h-4 mr-2"
-              xmlns="http://www.w3.org/2000/svg" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            {t('uploadFile')}
-          </>
-        )}
-      </Button>
+      {/* Botón de subida */}
+      {selectedFile && !isUploading && (
+        <Button
+          onClick={handleUpload}
+          className="w-full h-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-2xl font-medium transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          {t('uploadFile')}
+        </Button>
+      )}
     </div>
   );
 }

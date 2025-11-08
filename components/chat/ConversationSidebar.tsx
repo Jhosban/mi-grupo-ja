@@ -46,97 +46,150 @@ export function ConversationSidebar({
     : conversations;
 
   return (
-    <div className="w-64 h-full border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800">
-      {/* New conversation button */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-        <button
-          data-testid="new-conversation"
-          onClick={onNewConversation}
-          className="flex items-center justify-center gap-2 w-full p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors mb-2"
-        >
-          <MessageSquarePlus className="h-5 w-5" />
-          <span>{t('interface.newConversation')}</span>
-        </button>
-        
-        {/* Botón de subida de archivos */}
-        {onShowFileUpload && (
+    <div className="w-60 h-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 flex flex-col">
+      {/* Header Section */}
+      <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+        <div className="space-y-3">
+          {/* Nueva conversación */}
           <button
-            onClick={onShowFileUpload}
-            className="flex items-center justify-center gap-2 w-full p-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-md transition-colors"
+            data-testid="new-conversation"
+            onClick={onNewConversation}
+            className="flex items-center justify-center gap-2 w-full p-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] font-medium text-sm"
           >
-            <PaperclipIcon className="h-5 w-5" />
-            <span>{t('interface.uploadFile')}</span>
+            <MessageSquarePlus className="h-4 w-4" />
+            <span>{t('interface.newConversation')}</span>
           </button>
-        )}
+          
+          {/* Botón de subida de archivos */}
+          {onShowFileUpload && (
+            <button
+              onClick={onShowFileUpload}
+              className="flex items-center justify-center gap-2 w-full p-3 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-xl transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 hover:shadow-sm font-medium text-sm"
+            >
+              <PaperclipIcon className="h-4 w-4" />
+              <span>{t('interface.uploadFile')}</span>
+            </button>
+          )}
+        </div>
       </div>
       
-      {/* Search input */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-        <input
-          type="text"
-          data-testid="sidebar-search"
-          placeholder={t('sidebar.search')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
+      {/* Search Section */}
+      <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+        <div className="relative">
+          <svg 
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500"
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            data-testid="sidebar-search"
+            placeholder={t('sidebar.search')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:focus:border-purple-400 transition-all duration-200"
+          />
+        </div>
       </div>
       
-      {/* Conversations list */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide p-3">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 px-1">
-          {t('sidebar.conversations')}
-        </h2>
-        
-        {filteredConversations.length > 0 ? (
-          <ul className="space-y-2">{/* Changed from space-y-1 to space-y-2 */}
-            {filteredConversations.map((conversation) => (
-              <li key={conversation.id} className="relative">
-                <div className={`w-full p-3 rounded-lg flex items-center justify-between group transition-colors ${
-                  activeConversationId === conversation.id
-                    ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent'
-                }`}>
-                  <button
-                    onClick={() => onSelectConversation(conversation.id)}
-                    className="flex-grow text-left overflow-hidden mr-2"
-                  >
-                    <div className="w-full">
-                      <span className={`block font-medium text-sm leading-tight ${
-                        activeConversationId === conversation.id
-                          ? 'text-blue-900 dark:text-blue-100'
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}>
-                        {formatConversationTitle(conversation.title || 'Conversación sin título')}
-                      </span>
-                    </div>
-                  </button>
-                  
-                  <button 
-                    className={`p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100 ${
-                      activeConversationId === conversation.id ? 'opacity-100' : ''
-                    } text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 flex-shrink-0`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onDeleteConversation) {
-                        onDeleteConversation(conversation.id);
-                      }
-                    }}
-                    title={t('sidebar.delete')}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {searchQuery ? 'No se encontraron conversaciones' : t('sidebar.noConversations')}
-            </p>
+      {/* Conversations Section */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <div className="p-3">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {t('sidebar.conversations')}
+            </h2>
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 px-2 py-1 rounded-md">
+              {filteredConversations.length}
+            </span>
           </div>
-        )}
+          
+          {filteredConversations.length > 0 ? (
+            <div className="space-y-2">
+              {filteredConversations.map((conversation) => (
+                <div key={conversation.id} className="relative group h-15">
+                  <div className={`relative overflow-hidden rounded-xl border transition-all duration-200 h-full ${
+                    activeConversationId === conversation.id
+                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800 shadow-md'
+                      : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-sm'
+                  }`}>
+                    <button
+                      onClick={() => onSelectConversation(conversation.id)}
+                      className="w-full p-2 h-13 text-left flex items-start justify-between"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <div className={`w-2 h-2 rounded-full ${
+                            activeConversationId === conversation.id
+                              ? 'bg-indigo-500'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                          }`} />
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Chat
+                            </span>
+                            {activeConversationId === conversation.id && (
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" title="Activo" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        <h3 className={`font-medium text-xs leading-tight ${
+                          activeConversationId === conversation.id
+                            ? 'text-indigo-900 dark:text-indigo-100'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}>
+                          {formatConversationTitle(conversation.title || 'Conversación sin título')}
+                        </h3>
+                      </div>
+                    </button>
+                    
+                    {/* Delete button */}
+                    <button 
+                      className="absolute top-2 right-2 p-1.5 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transform scale-90 hover:scale-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onDeleteConversation) {
+                          onDeleteConversation(conversation.id);
+                        }
+                      }}
+                      title={t('sidebar.delete')}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800/50 rounded-2xl flex items-center justify-center">
+                <MessageSquarePlus className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                {searchQuery ? 'Sin resultados' : 'Sin conversaciones'}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-48 mx-auto">
+                {searchQuery 
+                  ? 'Intenta con otros términos de búsqueda' 
+                  : 'Inicia una nueva conversación para comenzar'
+                }
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={onNewConversation}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-xl transition-colors duration-200"
+                >
+                  <MessageSquarePlus className="h-4 w-4" />
+                  Nueva conversación
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
