@@ -93,7 +93,7 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                  <div className="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-200">
+                  <div className="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-300 dark:border-gray-700/50 hover:shadow-lg transition-all duration-200">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                         <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
                     </div>
                   </div>
                   
-                  <div className="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-200">
+                  <div className="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-300 dark:border-gray-700/50 hover:shadow-lg transition-all duration-200">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
                         <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +221,7 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
       </div>
       
       {/* Chat input area - Fixed at bottom */}
-      <div className="flex-shrink-0 border-t border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4">
+      <div className="flex-shrink-0 border-t border-gray-300 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4">
         <div className="max-w-4xl mx-auto">
           <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
         </div>
@@ -232,7 +232,7 @@ export function ChatArea({ messages, isLoading, onSendMessage, currentModel = 'g
         {showFileUpload && (
           <div 
             id="file-upload-container"
-            className="absolute bottom-full w-full p-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 rounded-t-2xl shadow-xl"
+            className="absolute bottom-full w-full p-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border-t border-gray-300 dark:border-gray-700/50 rounded-t-2xl shadow-xl"
           >
             <FileUpload 
               model={currentModel}

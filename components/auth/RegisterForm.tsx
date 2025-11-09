@@ -56,6 +56,8 @@ export default function RegisterForm() {
 
       // Iniciar sesión automáticamente después del registro
       const locale = getCurrentLocale();
+      // Marcar que es un usuario nuevo para mostrar el modal
+      localStorage.setItem('new_user_registration', 'true');
       await signIn("credentials", {
         email,
         password,

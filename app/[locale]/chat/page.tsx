@@ -9,6 +9,7 @@ import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
 import FileUpload from '@/components/upload/FileUpload';
+import WelcomeModal from '@/components/ui/WelcomeModal';
 import { Message, Conversation } from '@/types/chat.types';
 
 // Force dynamic rendering to avoid static generation issues with next-intl
@@ -18,6 +19,7 @@ export default function ChatLayout() {
   const t = useTranslations('chat');
   const router = useRouter();
   const params = useParams();
+  const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -30,8 +32,35 @@ export default function ChatLayout() {
   // State for model selection (gemini es el predeterminado)
   const [currentModel, setCurrentModel] = useState<'gemini' | 'openai'>('gemini');
 
+  // State for welcome modal
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
   // Get app name from environment variable
   const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Talksy';
+
+  // Check if user is first time login and show welcome modal
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const hasSeenWelcome = localStorage.getItem(`welcome_seen_${session.user.email}`);
+      const isNewUser = localStorage.getItem('new_user_registration');
+      
+      if (!hasSeenWelcome || isNewUser) {
+        setShowWelcomeModal(true);
+        // Limpiar la marca de usuario nuevo si existe
+        if (isNewUser) {
+          localStorage.removeItem('new_user_registration');
+        }
+      }
+    }
+  }, [session, status]);
+
+  // Handle welcome modal close
+  const handleWelcomeModalClose = () => {
+    if (session?.user?.email) {
+      localStorage.setItem(`welcome_seen_${session.user.email}`, 'true');
+    }
+    setShowWelcomeModal(false);
+  };
   
   // Fetch conversations on component mount
   useEffect(() => {
@@ -449,6 +478,12 @@ export default function ChatLayout() {
           </div>
         </div>
       )}
+      
+      {/* Welcome Modal */}
+      <WelcomeModal 
+        isOpen={showWelcomeModal}
+        onClose={handleWelcomeModalClose}
+      />
       
       {/* Notificación pop-up */}
       {showNotification && (

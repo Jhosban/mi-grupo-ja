@@ -70,7 +70,7 @@ export default function BackendSelector() {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-600/50 transition-all duration-200 hover:shadow-sm"
+        className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600/50 transition-all duration-200 hover:shadow-sm"
       >
         <div className={`w-2 h-2 rounded-full mr-2 ${getBackendColor(selectedBackend)}`} />
         <span className="mr-2">{getBackendLabel(selectedBackend)}</span>
@@ -78,12 +78,12 @@ export default function BackendSelector() {
       </button>
       
       {showDropdown && (
-        <div className="absolute left-0 mt-2 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-200/50 dark:border-gray-700/50">
+        <div className="absolute left-0 mt-2 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-300 dark:border-gray-700/50">
           <button
             onClick={() => handleBackendChange('n8n')}
             className={`flex items-center w-full text-left px-4 py-2.5 text-sm transition-colors duration-200 ${
               selectedBackend === 'n8n' 
-                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' 
+                ? 'text-purple-700 dark:text-purple-300' 
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
@@ -94,7 +94,7 @@ export default function BackendSelector() {
             onClick={() => handleBackendChange('python')}
             className={`flex items-center w-full text-left px-4 py-2.5 text-sm transition-colors duration-200 ${
               selectedBackend === 'python' 
-                ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' 
+                ? 'text-orange-700 dark:text-orange-300' 
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >

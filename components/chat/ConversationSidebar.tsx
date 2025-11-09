@@ -46,9 +46,9 @@ export function ConversationSidebar({
     : conversations;
 
   return (
-    <div className="w-60 h-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 flex flex-col">
+    <div className="w-60 h-full bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-r border-gray-300 dark:border-gray-700/50 flex flex-col">
       {/* Header Section */}
-      <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+      <div className="p-4 border-b border-gray-300 dark:border-gray-700/50">
         <div className="space-y-3">
           {/* Nueva conversación */}
           <button
@@ -64,7 +64,7 @@ export function ConversationSidebar({
           {onShowFileUpload && (
             <button
               onClick={onShowFileUpload}
-              className="flex items-center justify-center gap-2 w-full p-3 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-xl transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 hover:shadow-sm font-medium text-sm"
+              className="flex items-center justify-center gap-2 w-full p-3 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-xl transition-all duration-200 border border-gray-300 dark:border-gray-700/50 hover:shadow-sm font-medium text-sm"
             >
               <PaperclipIcon className="h-4 w-4" />
               <span>{t('interface.uploadFile')}</span>
@@ -74,7 +74,7 @@ export function ConversationSidebar({
       </div>
       
       {/* Search Section */}
-      <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+      <div className="p-4 border-b border-gray-300 dark:border-gray-700/50">
         <div className="relative">
           <svg 
             className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500"
@@ -114,7 +114,7 @@ export function ConversationSidebar({
                   <div className={`relative overflow-hidden rounded-xl border transition-all duration-200 h-full ${
                     activeConversationId === conversation.id
                       ? 'bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800 shadow-md'
-                      : 'bg-white/80 dark:bg-gray-800/80 border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-sm'
+                      : 'bg-white/80 dark:bg-gray-800/80 border-gray-300 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-sm'
                   }`}>
                     <button
                       onClick={() => onSelectConversation(conversation.id)}

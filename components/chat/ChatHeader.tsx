@@ -79,7 +79,7 @@ export function ChatHeader({
   const canChangeModel = activeBackend === 'n8n';
   
   return (
-    <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 flex-shrink-0 h-16">
+    <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-300 dark:border-gray-700/50 flex-shrink-0 h-16">
       <div className="flex items-center justify-between h-16 px-6">
         {/* Left section */}
         <div className="flex items-center space-x-4">
@@ -107,7 +107,7 @@ export function ChatHeader({
             <div className="relative" ref={modelDropdownRef}>
               <button 
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
-                className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-600/50 transition-all duration-200 hover:shadow-sm"
+                className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600/50 transition-all duration-200 hover:shadow-sm"
               >
                 <div className={`w-2 h-2 rounded-full mr-2 ${currentModel === 'gemini' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
                 <span className="mr-2">{currentModel === 'gemini' ? t('settings.modelGemini') : t('settings.modelOpenAI')}</span>
@@ -115,7 +115,7 @@ export function ChatHeader({
               </button>
               
               {showModelDropdown && (
-                <div className="absolute left-0 mt-2 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-200/50 dark:border-gray-700/50">
+                <div className="absolute left-0 mt-2 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-300 dark:border-gray-700/50">
                   <button
                     onClick={() => {
                       if (onModelChange) onModelChange('gemini');
@@ -123,7 +123,7 @@ export function ChatHeader({
                     }}
                     className={`flex items-center w-full text-left px-4 py-2.5 text-sm transition-colors duration-200 ${
                       currentModel === 'gemini' 
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' 
+                        ? 'text-blue-700 dark:text-blue-300' 
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }`}
                   >
@@ -137,7 +137,7 @@ export function ChatHeader({
                     }}
                     className={`flex items-center w-full text-left px-4 py-2.5 text-sm transition-colors duration-200 ${
                       currentModel === 'openai' 
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' 
+                        ? 'text-emerald-700 dark:text-emerald-300' 
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }`}
                   >
@@ -151,7 +151,7 @@ export function ChatHeader({
 
           {/* Disabled model selector for Python backend */}
           {onModelChange && !canChangeModel && (
-            <div className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 dark:bg-gray-700/30 text-gray-400 dark:text-gray-500 border border-gray-200/50 dark:border-gray-600/30 cursor-not-allowed">
+            <div className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 dark:bg-gray-700/30 text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600/30 cursor-not-allowed">
               <div className={`w-2 h-2 rounded-full mr-2 ${currentModel === 'gemini' ? 'bg-blue-400' : 'bg-emerald-400'} opacity-50`} />
               <span className="mr-2">{currentModel === 'gemini' ? t('settings.modelGemini') : t('settings.modelOpenAI')}</span>
               <ChevronDown className="h-4 w-4 opacity-50" />
@@ -168,7 +168,7 @@ export function ChatHeader({
         <div className="flex items-center space-x-4">
           {/* User info - Modern design */}
           {session?.user && (
-            <div className="hidden sm:flex items-center space-x-3 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50">
+            <div className="hidden sm:flex items-center space-x-3 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600/50">
               <div className="w-7 h-7 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-sm font-medium">
                 {session.user.name?.charAt(0) || session.user.email?.charAt(0) || 'U'}
               </div>
@@ -190,7 +190,7 @@ export function ChatHeader({
             </button>
             
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-200/50 dark:border-gray-700/50">
+              <div className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-300 dark:border-gray-700/50">
                 {/* Mobile-only user info */}
                 {session?.user && (
                   <div className="sm:hidden px-4 py-3 border-b border-gray-100 dark:border-gray-700">
@@ -218,7 +218,7 @@ export function ChatHeader({
                 {/* Logout button */}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                  className="flex items-center w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 hover:rounded-lg dark:hover:bg-red-900/20 transition-colors duration-200"
                   data-testid="logout-button"
                 >
                   <LogOut className="h-4 w-4 mr-3" />
