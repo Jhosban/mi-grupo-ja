@@ -31,7 +31,7 @@ export default function ChatLayout() {
   const [currentModel, setCurrentModel] = useState<'gemini' | 'openai'>('gemini');
 
   // Get app name from environment variable
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'MiChat';
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Talksy';
   
   // Fetch conversations on component mount
   useEffect(() => {

@@ -5,7 +5,7 @@
 
 export const env = {
   // Aplicación
-  appName: process.env.NEXT_PUBLIC_APP_NAME || 'Chat',
+  appName: process.env.NEXT_PUBLIC_APP_NAME || 'Talksy',
   nodeEnv: process.env.NODE_ENV || 'development',
   logLevel: process.env.LOG_LEVEL || 'info',
   appVersion: process.env.APP_VERSION || '1.0.0',

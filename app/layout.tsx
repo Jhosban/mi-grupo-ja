@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: process.env.NEXT_PUBLIC_APP_NAME || 'MiChat',
+  title: process.env.NEXT_PUBLIC_APP_NAME || 'Talksy',
   description: 'Una aplicación de chat con integración a n8n',
 };
 

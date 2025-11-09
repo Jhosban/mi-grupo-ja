@@ -126,14 +126,14 @@ export default function RegisterForm() {
               Nombre completo
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="pl-10 h-11 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
+                className="pl-10 h-11 bg-gray-50 dark:bg-gray-700/50 border-gray-400 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200 text-gray-900 dark:text-white"
                 placeholder="Tu nombre completo"
               />
             </div>
@@ -145,14 +145,14 @@ export default function RegisterForm() {
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="pl-10 h-11 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
+                className="pl-10 h-11 bg-gray-50 dark:bg-gray-700/50 border-gray-400 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200 text-gray-900 dark:text-white"
                 placeholder="tu@email.com"
               />
             </div>
@@ -164,23 +164,16 @@ export default function RegisterForm() {
               Contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="pl-10 pr-12 h-11 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
+                className="pl-10 h-11 bg-gray-50 dark:bg-gray-700/50 border-gray-400 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200 text-gray-900 dark:text-white"
                 placeholder="Mínimo 7 caracteres"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
           </div>
 
@@ -190,23 +183,16 @@ export default function RegisterForm() {
               Confirmar contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="pl-10 pr-12 h-11 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
+                className="pl-10 h-11 bg-gray-50 dark:bg-gray-700/50 border-gray-400 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200 text-gray-900 dark:text-white"
                 placeholder="Repite tu contraseña"
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
           </div>
 
@@ -247,7 +233,7 @@ export default function RegisterForm() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={isLoading}
-          className="w-full h-11 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-xl font-medium transition-all duration-200 transform hover:scale-[1.02] shadow-sm"
+          className="w-full h-11 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-white dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-xl font-medium transition-all duration-200 transform hover:scale-[1.02] shadow-sm"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" className="mr-3">
             <path
