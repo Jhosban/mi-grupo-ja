@@ -5,8 +5,6 @@ import { useTranslations } from 'next-intl';
 import { Menu, Settings, LogOut, User, ChevronDown } from 'lucide-react';
 import { ChatHeaderProps } from '@/types/chat.types';
 import { signOut, useSession } from 'next-auth/react';
-import BackendSelector from '@/components/ui/BackendSelector';
-import { getActiveBackend } from '@/lib/backend-config';
 
 export function ChatHeader({ 
   title, 
@@ -19,7 +17,6 @@ export function ChatHeader({
   const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [activeBackend, setActiveBackend] = useState<'n8n' | 'python'>('n8n');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   
@@ -39,33 +36,6 @@ export function ChatHeader({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // Actualizar el backend activo cuando cambie
-  useEffect(() => {
-    const backend = getActiveBackend();
-    setActiveBackend(backend);
-  }, []);
-
-  // Escuchar cambios en localStorage para el backend
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const backend = getActiveBackend();
-      setActiveBackend(backend);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // También escuchar cambios en el backend usando un intervalo
-    const interval = setInterval(() => {
-      const backend = getActiveBackend();
-      setActiveBackend(backend);
-    }, 500);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
   
   // Handle logout
   const handleLogout = async () => {
@@ -75,9 +45,6 @@ export function ChatHeader({
     await signOut({ callbackUrl: `/${locale}/login` });
   };
 
-  // Solo mostrar el selector de modelo si el backend es n8n
-  const canChangeModel = activeBackend === 'n8n';
-  
   return (
     <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-300 dark:border-gray-700/50 flex-shrink-0 h-16">
       <div className="flex items-center justify-between h-16 px-6">
@@ -101,11 +68,11 @@ export function ChatHeader({
             </div>
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h1>
           </div>
-          
+
           {/* Model selector - Modern pill design */}
-          {onModelChange && canChangeModel && (
+          {onModelChange && (
             <div className="relative" ref={modelDropdownRef}>
-              <button 
+              <button
                 onClick={() => setShowModelDropdown(!showModelDropdown)}
                 className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600/50 transition-all duration-200 hover:shadow-sm"
               >
@@ -113,17 +80,17 @@ export function ChatHeader({
                 <span className="mr-2">{currentModel === 'gemini' ? t('settings.modelGemini') : t('settings.modelOpenAI')}</span>
                 <ChevronDown className="h-4 w-4 transition-transform duration-200" />
               </button>
-              
+
               {showModelDropdown && (
                 <div className="absolute left-0 mt-2 w-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl py-2 z-10 border border-gray-300 dark:border-gray-700/50">
                   <button
                     onClick={() => {
-                      if (onModelChange) onModelChange('gemini');
+                      onModelChange('gemini');
                       setShowModelDropdown(false);
                     }}
                     className={`flex items-center w-full text-left px-4 py-2.5 text-sm transition-colors duration-200 ${
-                      currentModel === 'gemini' 
-                        ? 'text-blue-700 dark:text-blue-300' 
+                      currentModel === 'gemini'
+                        ? 'text-blue-700 dark:text-blue-300'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }`}
                   >
@@ -132,12 +99,12 @@ export function ChatHeader({
                   </button>
                   <button
                     onClick={() => {
-                      if (onModelChange) onModelChange('openai');
+                      onModelChange('openai');
                       setShowModelDropdown(false);
                     }}
                     className={`flex items-center w-full text-left px-4 py-2.5 text-sm transition-colors duration-200 ${
-                      currentModel === 'openai' 
-                        ? 'text-emerald-700 dark:text-emerald-300' 
+                      currentModel === 'openai'
+                        ? 'text-emerald-700 dark:text-emerald-300'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }`}
                   >
@@ -149,19 +116,6 @@ export function ChatHeader({
             </div>
           )}
 
-          {/* Disabled model selector for Python backend */}
-          {onModelChange && !canChangeModel && (
-            <div className="flex items-center px-3 py-2 text-sm font-medium rounded-xl bg-gray-50 dark:bg-gray-700/30 text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600/30 cursor-not-allowed">
-              <div className={`w-2 h-2 rounded-full mr-2 ${currentModel === 'gemini' ? 'bg-blue-400' : 'bg-emerald-400'} opacity-50`} />
-              <span className="mr-2">{currentModel === 'gemini' ? t('settings.modelGemini') : t('settings.modelOpenAI')}</span>
-              <ChevronDown className="h-4 w-4 opacity-50" />
-            </div>
-          )}
-          
-          {/* Backend Selector */}
-          <div className="hidden sm:block">
-            <BackendSelector />
-          </div>
         </div>
         
         {/* Right section */}
@@ -209,11 +163,6 @@ export function ChatHeader({
                     </div>
                   </div>
                 )}
-                
-                {/* Mobile-only backend selector */}
-                <div className="sm:hidden px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                  <BackendSelector />
-                </div>
                 
                 {/* Logout button */}
                 <button

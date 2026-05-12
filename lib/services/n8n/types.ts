@@ -9,6 +9,7 @@ export type N8nRequestBody = {
   topK?: number;
   temperature?: number;
   history?: { role: 'USER' | 'ASSISTANT' | 'SYSTEM'; content: string }[];
+  sessionId?: string;
   metadata?: Record<string, unknown>;
 };
 

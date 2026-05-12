@@ -57,6 +57,6 @@
     "uploadComplete": "¡Completado!",
     "uploadSuccess": "Archivo subido correctamente",
     "uploadError": "Error al subir el archivo",
-    "uploadRequired": "Por favor, carga un archivo primero para usar el backend de Python"
+    "uploadRequired": "Por favor, carga un archivo primero"
   }
 }

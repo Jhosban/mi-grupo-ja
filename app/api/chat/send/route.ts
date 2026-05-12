@@ -2,11 +2,10 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { BackendService } from '@/lib/services/backend-service';
-import { getActiveBackend } from '@/lib/backend-config';
 import { prisma } from '@/lib/db';
 import { authOptions } from '@/lib/auth/auth';
 import { MessageRole } from '@prisma/client';
-import { formatSessionInfo } from '@/lib/services/shared';
+import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs'; // SSE estable
 
@@ -46,7 +45,7 @@ async function handleRequest(req: NextRequest) {
       );
     }
 
-  let message: string, conversationId: string, settings: UserSettings | undefined, model: 'gemini' | 'openai', activeBackend: any;
+  let message: string, conversationId: string, settings: UserSettings | undefined, model: 'gemini' | 'openai';
     
     // Check if request is from EventSource (GET with query params) or fetch (POST with body)
     const url = new URL(req.url);
@@ -59,7 +58,6 @@ async function handleRequest(req: NextRequest) {
       conversationId = parsedData.conversationId;
       settings = parsedData.settings;
       model = parsedData.model || 'gemini'; // Por defecto usa Gemini si no se especifica
-      activeBackend = parsedData.activeBackend;
     } else {
       // Parse from request body (for regular POST)
       const body = await req.json().catch(() => ({}));
@@ -67,12 +65,6 @@ async function handleRequest(req: NextRequest) {
       conversationId = body.conversationId;
       settings = body.settings;
       model = body.model || 'gemini'; // Por defecto usa Gemini si no se especifica
-      activeBackend = body.activeBackend;
-    }
-    
-    // Validar y normalizar el backend
-    if (!['python', 'n8n'].includes(activeBackend)) {
-      activeBackend = 'n8n';
     }
     
     // Get user ID from email
@@ -115,7 +107,10 @@ async function handleRequest(req: NextRequest) {
         const newConversation = await prisma.conversation.create({
           data: {
             title: `Conversación ${new Date().toLocaleString()}`,
-            userId: user.id
+            userId: user.id,
+            settings: {
+              sessionId: randomUUID()
+            }
           }
         });
         
@@ -126,12 +121,22 @@ async function handleRequest(req: NextRequest) {
       const newConversation = await prisma.conversation.create({
         data: {
           title: `Conversación ${new Date().toLocaleString()}`,
-          userId: user.id
+          userId: user.id,
+          settings: {
+            sessionId: randomUUID()
+          }
         }
       });
       
       conversationId = newConversation.id;
     }
+    
+    // Get the current conversation to retrieve the sessionId
+    const currentConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { settings: true }
+    });
+    const sessionId = (currentConversation?.settings as any)?.sessionId;
     
     if (!message) {
       return new Response(
@@ -152,8 +157,7 @@ async function handleRequest(req: NextRequest) {
       );
     }
     
-    // Create backend service with the active backend from the client
-    const backendService = new BackendService(model as 'gemini' | 'openai', activeBackend);
+    const backendService = new BackendService(model as 'gemini' | 'openai');
     
     try {
       // Save user message to the database
@@ -165,41 +169,13 @@ async function handleRequest(req: NextRequest) {
         }
       });
       
-      // Obtener chatbotId si está disponible en la conversación
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId }
-      });
-      
-      console.log('📋 Conversación encontrada:', conversation?.id);
-      console.log('📋 Backend activo:', activeBackend);
-      console.log('📋 Settings de la conversación:', JSON.stringify(conversation?.settings, null, 2));
-      
-      // Obtener chatbotId según el backend
-      let chatbotId: string | undefined;
-      
-      if (activeBackend === 'python') {
-        // Python requiere un chatbotId
-        const pythonSettings = (conversation?.settings as any)?.pythonSessionData;
-        chatbotId = pythonSettings?.chatbotId || (conversation?.settings as any)?.chatbotId;
-        
-        if (chatbotId) {
-          console.log(`✅ ${formatSessionInfo('python', pythonSettings || conversation?.settings)}`);
-        } else {
-          console.log(`❌ ${formatSessionInfo('python', null)}`);
-        }
-      } else if (activeBackend === 'n8n') {
-        // n8n no requiere chatbotId, pero podemos registrar que está listo
-        console.log(`✅ ${formatSessionInfo('n8n', null)}`);
-      }
-      
-      console.log('� ChatbotId final:', chatbotId || 'N/A');
-      
       // Send message using the configured backend service
       const responseData = await backendService.sendMessage(
         message,
         settings?.topK ?? 5,
         settings?.temperature ?? 0.7,
-        chatbotId
+        undefined,
+        sessionId
       );
       
       // Create encoder for SSE
@@ -281,14 +257,8 @@ async function handleRequest(req: NextRequest) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       console.error('Error from backend service:', errorMessage);
       
-      // Determinar el código de error apropiado
-      let errorCode = 'BACKEND_SERVICE_ERROR';
-      if (errorMessage.includes('archivo PDF') || errorMessage.includes('chatbot')) {
-        errorCode = 'PYTHON_FILE_REQUIRED';
-      }
-      
       return new Response(
-        `data: ${JSON.stringify({ type: 'error', data: { message: errorMessage, code: errorCode } })}\n\n`, 
+        `data: ${JSON.stringify({ type: 'error', data: { message: errorMessage, code: 'BACKEND_SERVICE_ERROR' } })}\n\n`, 
         {
           headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
         }

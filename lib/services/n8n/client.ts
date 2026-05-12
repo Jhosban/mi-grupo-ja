@@ -29,7 +29,7 @@ export class N8nClient {
     this.apiKey = n8nConfig.apiKey;
   }
 
-  async sendMessage(message: string, topK?: number, temperature?: number): Promise<N8nResponseBody> {
+  async sendMessage(message: string, topK?: number, temperature?: number, sessionId?: string): Promise<N8nResponseBody> {
     const url = this.endpointUrl;
 
     const headers: Record<string, string> = {
@@ -44,6 +44,7 @@ export class N8nClient {
       chatInput: message,
       topK: topK ?? 5,
       temperature: temperature ?? 0.7,
+      ...(sessionId && { sessionId }),
       metadata: {
         source: 'webapp',
         appVersion: '1.0.0'

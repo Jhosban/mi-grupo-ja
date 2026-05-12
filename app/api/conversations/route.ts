@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 import { authOptions } from '@/lib/auth/auth';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic'; // Ensure dynamic rendering
 
@@ -83,7 +84,10 @@ export async function POST(req: NextRequest) {
     const newConversation = await prisma.conversation.create({
       data: {
         title: title || `${new Date().getDate().toString().padStart(2, '0')}/${(new Date().getMonth() + 1).toString().padStart(2, '0')}/${new Date().getFullYear()}, ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`,
-        userId: user.id
+        userId: user.id,
+        settings: {
+          sessionId: randomUUID()
+        }
       }
     });
     

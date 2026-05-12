@@ -471,7 +471,7 @@ Variables .env completas; build y pnpm dev funcionan.
 
 
 14) Paso a paso para estudiantes
-Elige el nombre y ponlo en .env.local → NEXT_PUBLIC_APP_NAME=TuNombre.
+Elige el nombre y ponlo en .env → NEXT_PUBLIC_APP_NAME=TuNombre.
 
 
 pnpm i --frozen-lockfile → pnpm dev.

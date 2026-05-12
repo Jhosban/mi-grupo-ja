@@ -347,10 +347,6 @@ export default function ChatLayout() {
                 return updatedMessages;
               });
               
-              // Si es error de archivo no cargado, mostrar notificación para cargar
-              if (errorCode === 'PYTHON_FILE_REQUIRED') {
-                showTemporaryNotification(t('FileUpload.uploadRequired') || 'Por favor, carga un archivo primero');
-              }
             }
           } catch (e) {
             console.error('Error parsing SSE message:', e);

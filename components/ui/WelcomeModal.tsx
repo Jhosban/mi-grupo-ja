@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, FileText, Brain, RefreshCw, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle, Brain, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WelcomeModalProps {
@@ -75,22 +75,6 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
             </div>
           </div>
 
-          {/* Modelos Separados */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl">
-            <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-1">
-                  Archivos por Modelo Separados
-                </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Cada modelo (Gemini y Python) mantiene sus propios archivos por separado. 
-                  Los documentos subidos a un modelo no estarán disponibles para el otro modelo.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Cambio de Modelo */}
           <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-2xl">
             <div className="flex items-start gap-3">
@@ -107,22 +91,6 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
             </div>
           </div>
 
-          {/* Modelo Python */}
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl">
-            <div className="flex items-start gap-3">
-              <Upload className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 mb-1">
-                  Modelo Python Requiere Archivos
-                </h3>
-                <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                  Para conversar con el modelo de Python, es necesario subir al menos un archivo 
-                  primero. El modelo analiza los documentos antes de poder responder tus preguntas.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Tips adicionales */}
           <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-2xl">
             <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
@@ -131,8 +99,8 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
             <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
               <li>• Sé específico en tus preguntas para obtener mejores respuestas</li>
               <li>• Si una respuesta no es satisfactoria, intenta reformular tu pregunta</li>
-              <li>• Experimenta con ambos modelos para diferentes tipos de consultas</li>
-              <li>• Mantén archivos organizados por modelo para mejor gestión</li>
+              <li>• Usa archivos claros y bien nombrados para mejorar el contexto</li>
+              <li>• Revisa las fuentes cuando quieras verificar una respuesta</li>
             </ul>
           </div>
         </div>
